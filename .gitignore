@@ -1,0 +1,4 @@
+node_modules/
+data/feedback.db
+data/uploads/
+.env

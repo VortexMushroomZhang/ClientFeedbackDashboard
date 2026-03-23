@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Feedback Dashboard — Actions</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="../css/actions.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+</head>
+<body>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h1 class="sidebar-title">Client Voice</h1>
+      <button class="sidebar-toggle" id="sidebar-toggle" title="Toggle sidebar">
+        <span class="material-icons-outlined" id="toggle-icon">chevron_left</span>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="./overview.html" class="nav-item">
+        <span class="material-icons-outlined">insights</span>
+        <span class="nav-label">Overview</span>
+      </a>
+      <a href="./feedback.html" class="nav-item">
+        <span class="material-icons-outlined">forum</span>
+        <span class="nav-label">All Feedback</span>
+      </a>
+      <a href="./themes.html" class="nav-item">
+        <span class="material-icons-outlined">label_outline</span>
+        <span class="nav-label">Themes</span>
+      </a>
+      <a href="./actions.html" class="nav-item active">
+        <span class="material-icons-outlined">bolt</span>
+        <span class="nav-label">Actions</span>
+      </a>
+      <div class="nav-divider"></div>
+      <a href="./data-import.html" class="nav-item">
+        <span class="material-icons-outlined">file_download</span>
+        <span class="nav-label">Data Import</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sync-status">
+        <span class="material-icons-outlined">sync</span>
+        Last sync: 2 min ago
+      </div>
+      <div class="total-count" id="total-count"></div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h2 class="page-title">Actions</h2>
+      <p class="page-subtitle" id="actions-subtitle">Suggested improvements — assign ownership and track progress</p>
+    </div>
+
+    <div class="action-list" id="action-list"></div>
+  </main>
+
+  <script src="../js/shared/sidebar.js"></script>
+  <script src="../js/shared/mock-data.js"></script>
+  <script src="../js/shared/api.js"></script>
+  <script src="../js/shared/utils.js"></script>
+  <script src="../js/pages/actions.js"></script>
+</body>
+</html>

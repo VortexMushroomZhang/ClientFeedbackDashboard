@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Feedback Dashboard — Data Import</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="../css/data-import.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+</head>
+<body>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h1 class="sidebar-title">Client Voice</h1>
+      <button class="sidebar-toggle" id="sidebar-toggle" title="Toggle sidebar">
+        <span class="material-icons-outlined" id="toggle-icon">chevron_left</span>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="./overview.html" class="nav-item">
+        <span class="material-icons-outlined">insights</span>
+        <span class="nav-label">Overview</span>
+      </a>
+      <a href="./feedback.html" class="nav-item">
+        <span class="material-icons-outlined">forum</span>
+        <span class="nav-label">All Feedback</span>
+      </a>
+      <a href="./themes.html" class="nav-item">
+        <span class="material-icons-outlined">label_outline</span>
+        <span class="nav-label">Themes</span>
+      </a>
+      <a href="./actions.html" class="nav-item">
+        <span class="material-icons-outlined">bolt</span>
+        <span class="nav-label">Actions</span>
+      </a>
+      <div class="nav-divider"></div>
+      <a href="./data-import.html" class="nav-item active">
+        <span class="material-icons-outlined">file_download</span>
+        <span class="nav-label">Data Import</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sync-status">
+        <span class="material-icons-outlined">sync</span>
+        Last sync: 2 min ago
+      </div>
+      <div class="total-count" id="total-count"></div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-header">
+      <div class="page-header-text">
+        <h2 class="page-title">Data Import</h2>
+        <p class="page-subtitle">Upload feedback files for AI-powered analysis</p>
+      </div>
+    </div>
+
+    <!-- Upload Zone -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Upload Feedback File</h3>
+      </div>
+      <div class="card-body">
+        <div class="upload-zone" id="upload-zone">
+          <span class="material-icons-outlined upload-icon">cloud_upload</span>
+          <div class="upload-text">Drag & drop a file here, or click to browse</div>
+          <div class="upload-hint">Accepts .csv, .docx, .pdf (max 10MB)</div>
+          <input type="file" id="file-input" accept=".csv,.docx,.pdf" hidden>
+        </div>
+
+        <div class="upload-options" id="upload-options" style="display:none;">
+          <div class="selected-file">
+            <span class="material-icons-outlined">description</span>
+            <span id="selected-filename"></span>
+            <button class="btn-text" id="clear-file">Remove</button>
+          </div>
+          <div class="source-select">
+            <label>Source label:</label>
+            <select id="source-select">
+              <option value="Import">Import</option>
+              <option value="Survey">Survey</option>
+              <option value="Interview">Interview</option>
+              <option value="CX Log">CX Log</option>
+              <option value="Support Ticket">Support Ticket</option>
+              <option value="NPS">NPS</option>
+            </select>
+          </div>
+          <button class="btn-primary" id="upload-btn">
+            <span class="material-icons-outlined">auto_awesome</span>
+            Upload & Analyze
+          </button>
+        </div>
+
+        <!-- Processing Status -->
+        <div class="processing-status" id="processing-status" style="display:none;">
+          <div class="processing-spinner"></div>
+          <div class="processing-steps">
+            <div class="step" id="step-extract">
+              <span class="material-icons-outlined step-icon">hourglass_empty</span>
+              <span>Extracting text from file...</span>
+            </div>
+            <div class="step" id="step-analyze">
+              <span class="material-icons-outlined step-icon">hourglass_empty</span>
+              <span>Analyzing feedback with AI...</span>
+            </div>
+            <div class="step" id="step-themes">
+              <span class="material-icons-outlined step-icon">hourglass_empty</span>
+              <span>Synthesizing themes...</span>
+            </div>
+            <div class="step" id="step-done">
+              <span class="material-icons-outlined step-icon">hourglass_empty</span>
+              <span>Finalizing import...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Result -->
+        <div class="upload-result" id="upload-result" style="display:none;">
+          <span class="material-icons-outlined result-icon" id="result-icon">check_circle</span>
+          <div class="result-text" id="result-text"></div>
+          <button class="btn-outline" id="upload-another">Upload Another File</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Import History -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Import History</h3>
+      </div>
+      <div class="card-body">
+        <table class="import-table">
+          <thead>
+            <tr>
+              <th>File</th>
+              <th>Type</th>
+              <th>Items</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="import-tbody">
+            <tr><td colspan="5" style="text-align:center;color:var(--text-hint);padding:24px;">No imports yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/shared/sidebar.js"></script>
+  <script src="../js/shared/api.js"></script>
+  <script src="../js/shared/utils.js"></script>
+  <script src="../js/pages/data-import.js"></script>
+</body>
+</html>

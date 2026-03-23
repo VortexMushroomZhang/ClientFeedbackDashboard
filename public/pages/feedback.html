@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Feedback Dashboard</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="../css/feedback.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h1 class="sidebar-title">Client Voice</h1>
+      <button class="sidebar-toggle" id="sidebar-toggle" title="Toggle sidebar">
+        <span class="material-icons-outlined" id="toggle-icon">chevron_left</span>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="./overview.html" class="nav-item">
+        <span class="material-icons-outlined">insights</span>
+        <span class="nav-label">Overview</span>
+      </a>
+      <a href="./feedback.html" class="nav-item active">
+        <span class="material-icons-outlined">forum</span>
+        <span class="nav-label">All Feedback</span>
+      </a>
+      <a href="./themes.html" class="nav-item">
+        <span class="material-icons-outlined">label_outline</span>
+        <span class="nav-label">Themes</span>
+      </a>
+      <a href="./actions.html" class="nav-item">
+        <span class="material-icons-outlined">bolt</span>
+        <span class="nav-label">Actions</span>
+      </a>
+      <div class="nav-divider"></div>
+      <a href="./data-import.html" class="nav-item">
+        <span class="material-icons-outlined">file_download</span>
+        <span class="nav-label">Data Import</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sync-status">
+        <span class="material-icons-outlined">sync</span>
+        Last sync: 2 min ago
+      </div>
+      <div class="total-count">247 total feedback items</div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="page-header-text">
+        <h2 class="page-title">All Feedback</h2>
+        <p class="page-subtitle"><span id="feedback-count">0</span> feedback items &middot; Last updated: 2 min ago</p>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-bar">
+      <div class="search-box">
+        <span class="material-icons-outlined">search</span>
+        <input type="text" id="search-input" placeholder="Search feedback...">
+      </div>
+      <div class="filter-group">
+        <select id="filter-source">
+          <option value="">All Sources</option>
+          <option value="Survey">Survey</option>
+          <option value="Interview">Interview</option>
+          <option value="CX Log">CX Log</option>
+          <option value="Support Ticket">Support Ticket</option>
+          <option value="NPS">NPS</option>
+        </select>
+        <select id="filter-category">
+          <option value="">All Categories</option>
+          <option value="UX">UX</option>
+          <option value="Performance">Performance</option>
+          <option value="Navigation">Navigation</option>
+          <option value="Business">Business</option>
+          <option value="Accessibility">Accessibility</option>
+          <option value="Data">Data</option>
+        </select>
+        <select id="filter-status">
+          <option value="">All Statuses</option>
+          <option value="New">New</option>
+          <option value="In Review">In Review</option>
+          <option value="Assigned">Assigned</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Resolved">Resolved</option>
+        </select>
+        <select id="filter-sentiment">
+          <option value="">All Sentiments</option>
+          <option value="Negative">Negative</option>
+          <option value="Neutral">Neutral</option>
+          <option value="Positive">Positive</option>
+        </select>
+        <select id="filter-department">
+          <option value="">All Departments</option>
+          <option value="Product">Product</option>
+          <option value="Engineering">Engineering</option>
+          <option value="CX">CX</option>
+          <option value="Design">Design</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-container">
+      <table class="feedback-table" id="feedback-table">
+        <thead>
+          <tr>
+            <th class="sortable" data-sort="date">Date <span class="sort-icon"></span></th>
+            <th class="sortable" data-sort="source">Source <span class="sort-icon"></span></th>
+            <th>Original Quote</th>
+            <th>Translation</th>
+            <th class="sortable" data-sort="category">Category <span class="sort-icon"></span></th>
+            <th class="sortable" data-sort="theme">Theme <span class="sort-icon"></span></th>
+            <th>Department</th>
+            <th class="sortable" data-sort="status">Status <span class="sort-icon"></span></th>
+            <th class="sortable" data-sort="sentiment">Sentiment <span class="sort-icon"></span></th>
+          </tr>
+        </thead>
+        <tbody id="feedback-tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" id="pagination"></div>
+  </main>
+
+  <!-- Detail Dialog Overlay -->
+  <div class="dialog-overlay" id="dialog-overlay">
+    <div class="dialog" id="feedback-dialog">
+      <div class="dialog-header">
+        <h3>Feedback Detail</h3>
+        <button class="dialog-close" id="dialog-close">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      </div>
+      <div class="dialog-body" id="dialog-body"></div>
+    </div>
+  </div>
+
+  <script src="../js/shared/sidebar.js"></script>
+  <script src="../js/shared/mock-data.js"></script>
+  <script src="../js/shared/api.js"></script>
+  <script src="../js/shared/utils.js"></script>
+  <script src="../js/pages/feedback.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"name": "ClientFeedbackDashboardV2",
+			"path": "."
+		},
+		{
+			"name": "Visual reference",
+			"path": "../../../Downloads/Client feedback dashboard/Visual reference"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "ClientFeedbackDashboardV2"
+	}
+}

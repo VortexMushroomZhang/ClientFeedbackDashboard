@@ -1,0 +1,233 @@
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 48px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.upload-zone:hover,
+.upload-zone.dragover {
+  border-color: var(--primary);
+  background: rgba(0, 105, 92, 0.04);
+}
+
+.upload-icon {
+  font-size: 48px;
+  color: var(--text-hint);
+  display: block;
+  margin-bottom: 12px;
+}
+
+.upload-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.upload-hint {
+  font-size: 13px;
+  color: var(--text-hint);
+}
+
+.upload-options {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.selected-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--surface);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.selected-file .material-icons-outlined {
+  font-size: 18px;
+  color: var(--text-hint);
+}
+
+.btn-text {
+  background: none;
+  border: none;
+  color: var(--danger, #c62828);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 6px;
+}
+
+.source-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.source-select select {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  background: var(--bg);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: var(--primary, #00695c);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: transparent;
+  color: var(--primary, #00695c);
+  border: 1px solid var(--primary, #00695c);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Processing */
+.processing-status {
+  margin-top: 24px;
+  padding: 20px;
+  background: var(--surface);
+  border-radius: 10px;
+}
+
+.processing-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary, #00695c);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.processing-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-hint);
+  transition: color 0.3s;
+}
+
+.step.active {
+  color: var(--primary, #00695c);
+  font-weight: 500;
+}
+
+.step.done {
+  color: var(--success, #2e7d32);
+}
+
+.step.done .step-icon {
+  color: var(--success, #2e7d32);
+}
+
+.step-icon {
+  font-size: 18px;
+}
+
+/* Result */
+.upload-result {
+  margin-top: 24px;
+  text-align: center;
+  padding: 24px;
+}
+
+.result-icon {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.result-icon.success { color: var(--success, #2e7d32); }
+.result-icon.error { color: var(--danger, #c62828); }
+
+.result-text {
+  font-size: 15px;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
+/* Import table */
+.import-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.import-table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-hint);
+  border-bottom: 1px solid var(--border);
+}
+
+.import-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+.import-status {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.import-status.completed { background: #e8f5e9; color: #2e7d32; }
+.import-status.processing { background: #fff8e1; color: #e65100; }
+.import-status.failed { background: #ffebee; color: #c62828; }
+.import-status.empty { background: #f5f5f5; color: #757575; }

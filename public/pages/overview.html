@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Feedback Dashboard — Overview</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="../css/overview.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h1 class="sidebar-title">Client Voice</h1>
+      <button class="sidebar-toggle" id="sidebar-toggle" title="Toggle sidebar">
+        <span class="material-icons-outlined" id="toggle-icon">chevron_left</span>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="./overview.html" class="nav-item active">
+        <span class="material-icons-outlined">insights</span>
+        <span class="nav-label">Overview</span>
+      </a>
+      <a href="./feedback.html" class="nav-item">
+        <span class="material-icons-outlined">forum</span>
+        <span class="nav-label">All Feedback</span>
+      </a>
+      <a href="./themes.html" class="nav-item">
+        <span class="material-icons-outlined">label_outline</span>
+        <span class="nav-label">Themes</span>
+      </a>
+      <a href="./actions.html" class="nav-item">
+        <span class="material-icons-outlined">bolt</span>
+        <span class="nav-label">Actions</span>
+      </a>
+      <div class="nav-divider"></div>
+      <a href="./data-import.html" class="nav-item">
+        <span class="material-icons-outlined">file_download</span>
+        <span class="nav-label">Data Import</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sync-status">
+        <span class="material-icons-outlined">sync</span>
+        Last sync: 2 min ago
+      </div>
+      <div class="total-count" id="total-count"></div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="page-header">
+      <div class="page-header-text">
+        <h2 class="page-title">Overview</h2>
+        <p class="page-subtitle">Your feedback dashboard at a glance</p>
+      </div>
+    </div>
+
+    <!-- Metric Cards -->
+    <div class="metrics-row" id="metrics-row"></div>
+
+    <!-- Two-column layout: Top 10 + Status Sidebar -->
+    <div class="overview-grid">
+      <div class="overview-main">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Top 10 Most-Mentioned Themes</h3>
+          </div>
+          <div class="card-body" id="top-themes-list"></div>
+        </div>
+      </div>
+      <div class="overview-side">
+        <!-- Status Breakdown -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">By Status</h3>
+          </div>
+          <div class="card-body" id="status-breakdown"></div>
+        </div>
+        <!-- Category Breakdown -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">By Category</h3>
+          </div>
+          <div class="card-body" id="category-breakdown"></div>
+        </div>
+        <!-- Recent Feedback -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Recent Feedback</h3>
+            <a href="./feedback.html" class="card-link">View all</a>
+          </div>
+          <div class="card-body" id="recent-feedback"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/shared/sidebar.js"></script>
+  <script src="../js/shared/mock-data.js"></script>
+  <script src="../js/shared/api.js"></script>
+  <script src="../js/shared/utils.js"></script>
+  <script src="../js/pages/overview.js"></script>
+</body>
+</html>
