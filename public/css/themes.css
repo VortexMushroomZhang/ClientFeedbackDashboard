@@ -621,6 +621,60 @@
   color: var(--primary);
 }
 
+/* ===== Theme Card Expand Icon ===== */
+.theme-expand-icon {
+  font-size: 20px;
+  color: var(--text-hint);
+  margin-left: 8px;
+  transition: color 0.15s;
+}
+
+.theme-card:hover .theme-expand-icon {
+  color: var(--text-secondary);
+}
+
+.theme-card-expanded {
+  border-left-color: var(--primary-dark);
+  box-shadow: var(--shadow-md);
+}
+
+/* ===== Inline Expand Panel ===== */
+.theme-card-expand-panel {
+  margin-top: 4px;
+}
+
+.theme-card-expand-divider {
+  height: 1px;
+  background: var(--border-light);
+  margin: 12px 0 16px;
+}
+
+/* ===== Scrollable quotes list ===== */
+.theme-quotes-list {
+  /* default: show all */
+}
+
+.theme-quotes-scrollable {
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.theme-quotes-scrollable::-webkit-scrollbar {
+  width: 4px;
+}
+
+.theme-quotes-scrollable::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.theme-quotes-scrollable::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
 /* ===== Theme Detail Dialog ===== */
 .dialog-lg {
   width: 720px;

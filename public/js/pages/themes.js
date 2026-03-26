@@ -5,6 +5,7 @@ let allThemes = [];
 let allFeedback = [];
 let allActionGroups = [];
 let archiveOpen = false;
+let expandedThemeIds = new Set();
 
 // ===== DOM =====
 const filterPills    = document.getElementById('filter-pills');
@@ -137,9 +138,42 @@ function renderThemeRow(t, isArchived) {
 }
 
 function renderThemeCard(t, isArchived) {
+  const isExpanded = expandedThemeIds.has(t.id);
+  const feedbackItems = allFeedback.filter(f => f.themeId === t.id).sort((a, b) => b.date.localeCompare(a.date));
+
+  const expandedHtml = isExpanded ? `
+    <div class="theme-card-expand-panel">
+      <div class="theme-card-expand-divider"></div>
+      <div class="detail-metrics-bar">
+        <div class="detail-metric"><div class="detail-metric-value">${t.mentions}</div><div class="detail-metric-label">Mentions</div></div>
+        <div class="detail-metric"><div class="detail-metric-value">${t.importance || 'Medium'}</div><div class="detail-metric-label">Importance</div></div>
+        <div class="detail-metric"><div class="detail-metric-value">${trendArrow(t.trend)} ${trendLabel(t.trend)}</div><div class="detail-metric-label">Trend</div></div>
+      </div>
+      <div class="linked-feedback-title">Linked Feedback (${feedbackItems.length})</div>
+      <div class="theme-quotes-list ${feedbackItems.length > 3 ? 'theme-quotes-scrollable' : ''}">
+        ${feedbackItems.length === 0
+          ? '<div style="font-size:13px;color:var(--text-hint);padding:8px 0;">No feedback linked to this theme yet.</div>'
+          : feedbackItems.map(f => `
+            <div class="linked-feedback-item">
+              <div class="linked-feedback-meta">
+                <span>${formatDate(f.date)}</span><span class="dot">&middot;</span>
+                <span>${f.source}</span><span class="dot">&middot;</span>
+                <span class="tag-category ${categoryClass(f.category)}">${f.category}</span><span class="dot">&middot;</span>
+                <span class="badge ${statusClass(f.status)}">${f.status}</span>
+                ${f.translation ? '<span class="dot">&middot;</span><span class="badge" style="background:#e3f2fd;color:#1565c0;font-size:10px;">Translated</span>' : ''}
+              </div>
+              <div class="linked-feedback-quote">${f.translation || f.quote}</div>
+            </div>
+          `).join('')}
+      </div>
+      <div class="detail-actions-bar">
+        <a href="./feedback.html?theme=${t.id}" class="btn-outline">View All Feedback →</a>
+      </div>
+    </div>` : '';
+
   return `
-    <div class="theme-card ${isArchived ? 'theme-card-archived' : ''}" data-id="${t.id}">
-      <div class="theme-card-top">
+    <div class="theme-card ${isArchived ? 'theme-card-archived' : ''} ${isExpanded ? 'theme-card-expanded' : ''}" data-id="${t.id}" style="cursor:pointer;">
+      <div class="theme-card-top theme-card-header">
         <div class="theme-card-info">
           <div class="theme-card-name">${t.name}</div>
           <div class="theme-card-desc">${t.description || ''}</div>
@@ -147,6 +181,7 @@ function renderThemeCard(t, isArchived) {
         <div class="theme-card-count">
           ${trendArrow(t.trend)}
           <span class="count-number">${t.mentions}</span>
+          <span class="material-icons-outlined theme-expand-icon">${isExpanded ? 'expand_less' : 'expand_more'}</span>
         </div>
       </div>
       <div class="theme-card-divider"></div>
@@ -181,9 +216,9 @@ function renderThemeCard(t, isArchived) {
               ).join('')}
             </select>
           </div>
-          <button class="theme-card-btn" data-id="${t.id}">Details</button>
         </div>
       </div>
+      ${expandedHtml}
     </div>`;
 }
 
@@ -271,9 +306,18 @@ sortSelect.addEventListener('change', () => { sortMode = sortSelect.value; rende
 
 // Theme row clicks
 document.addEventListener('click', e => {
-  // Details dialog
-  const detailBtn = e.target.closest('.theme-card-btn');
-  if (detailBtn) { openDetail(detailBtn.dataset.id); return; }
+  // Expand/collapse theme card on click (but not on controls)
+  const card = e.target.closest('.theme-card');
+  if (card && !e.target.closest('.theme-card-controls') && !e.target.closest('.theme-card-expand-panel') && !e.target.closest('a')) {
+    const themeId = card.dataset.id;
+    if (expandedThemeIds.has(themeId)) {
+      expandedThemeIds.delete(themeId);
+    } else {
+      expandedThemeIds.add(themeId);
+    }
+    render();
+    return;
+  }
 
   // Approve suggestion
   const approveBtn = e.target.closest('.btn-suggestion-approve');
