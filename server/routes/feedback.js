@@ -37,6 +37,17 @@ router.get('/', (req, res) => {
     LIMIT ? OFFSET ?
   `).all(...params, parseInt(limit), offset);
 
+  // Derive feedback status from theme's action statuses
+  function deriveStatus(themeId) {
+    if (!themeId) return 'new';
+    const actions = db.prepare('SELECT status FROM actions WHERE theme_id = ?').all(themeId);
+    if (actions.length === 0) return 'new';
+    const statuses = actions.map(a => (a.status || 'new').toLowerCase());
+    if (statuses.some(s => s === 'in progress' || s === 'blocked')) return 'ongoing';
+    if (statuses.every(s => s === 'completed' || s === 'out of scope')) return 'archived';
+    return 'new';
+  }
+
   res.json({
     items: rows.map(r => ({
       id: r.id,
@@ -45,10 +56,11 @@ router.get('/', (req, res) => {
       quote: r.quote,
       translation: r.translation,
       category: r.category,
+      subType: r.sub_type,
       themeId: r.theme_id,
       themeName: r.theme_name || 'Unknown',
       department: r.department,
-      status: r.status,
+      status: deriveStatus(r.theme_id),
       sentiment: r.sentiment,
       priority: r.priority,
       thematicCode: r.thematic_code,

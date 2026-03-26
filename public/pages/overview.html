@@ -6,7 +6,6 @@
   <title>Client Feedback Dashboard — Overview</title>
   <link rel="stylesheet" href="../css/styles.css">
   <link rel="stylesheet" href="../css/overview.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
 </head>
 <body>
@@ -62,40 +61,58 @@
     <!-- Metric Cards -->
     <div class="metrics-row" id="metrics-row"></div>
 
-    <!-- Two-column layout: Top 10 + Status Sidebar -->
+    <!-- Main grid: left column (themes + breakdowns) + right column (recent activity) -->
     <div class="overview-grid">
-      <div class="overview-main">
+
+      <!-- Left column -->
+      <div class="overview-left">
+
+        <!-- Top 10 Themes -->
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title">Top 10 Most-Mentioned Themes</h3>
+            <div class="card-header-text">
+              <h3 class="card-title">Top 10 Themes</h3>
+              <p class="card-subtitle">Breakdown of feedback by most-mentioned themes</p>
+            </div>
+            <a href="./themes.html" class="card-link">View all themes</a>
+          </div>
+          <div class="themes-table-header">
+            <span class="themes-col-theme">Theme</span>
+            <span class="themes-col-dist">Distribution</span>
           </div>
           <div class="card-body" id="top-themes-list"></div>
         </div>
+
+        <!-- Status + Category side by side -->
+        <div class="breakdown-grid">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">By Status</h3>
+            </div>
+            <div class="card-body" id="status-breakdown"></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">By Category</h3>
+            </div>
+            <div class="card-body" id="category-breakdown"></div>
+          </div>
+        </div>
+
       </div>
-      <div class="overview-side">
-        <!-- Status Breakdown -->
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">By Status</h3>
+
+      <!-- Right column: Recent Activity -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-text">
+            <h3 class="card-title">New Feedback</h3>
+            <p class="card-subtitle">Stay up to date with recent submissions</p>
           </div>
-          <div class="card-body" id="status-breakdown"></div>
+          <a href="./feedback.html" class="card-link">View all</a>
         </div>
-        <!-- Category Breakdown -->
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">By Category</h3>
-          </div>
-          <div class="card-body" id="category-breakdown"></div>
-        </div>
-        <!-- Recent Feedback -->
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">Recent Feedback</h3>
-            <a href="./feedback.html" class="card-link">View all</a>
-          </div>
-          <div class="card-body" id="recent-feedback"></div>
-        </div>
+        <div class="card-body" id="recent-activity"></div>
       </div>
+
     </div>
   </main>
 

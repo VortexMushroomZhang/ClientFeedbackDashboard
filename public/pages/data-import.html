@@ -6,7 +6,6 @@
   <title>Client Feedback Dashboard — Data Import</title>
   <link rel="stylesheet" href="../css/styles.css">
   <link rel="stylesheet" href="../css/data-import.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
 </head>
 <body>
@@ -66,8 +65,8 @@
         <div class="upload-zone" id="upload-zone">
           <span class="material-icons-outlined upload-icon">cloud_upload</span>
           <div class="upload-text">Drag & drop a file here, or click to browse</div>
-          <div class="upload-hint">Accepts .csv, .docx, .pdf (max 10MB)</div>
-          <input type="file" id="file-input" accept=".csv,.docx,.pdf" hidden>
+          <div class="upload-hint">Accepts .xlsx, .xls, .csv, .docx, .pdf (max 10MB)</div>
+          <input type="file" id="file-input" accept=".csv,.xlsx,.xls,.docx,.pdf" hidden>
         </div>
 
         <div class="upload-options" id="upload-options" style="display:none;">
@@ -122,6 +121,23 @@
           <div class="result-text" id="result-text"></div>
           <button class="btn-outline" id="upload-another">Upload Another File</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Re-analyze Themes -->
+    <div class="card" style="margin-top:24px;">
+      <div class="card-header">
+        <h3 class="card-title">Re-analyze Themes</h3>
+      </div>
+      <div class="card-body">
+        <p style="font-size:14px;color:var(--text-secondary);margin-bottom:16px;line-height:1.6;">
+          Re-clusters all existing feedback into properly merged themes using AI. Use this when themes look fragmented or duplicated. <strong>This replaces all current themes and action suggestions.</strong>
+        </p>
+        <button class="btn-primary" id="retheme-btn">
+          <span class="material-icons-outlined">auto_fix_high</span>
+          Re-analyze Themes
+        </button>
+        <div id="retheme-status" style="display:none;margin-top:16px;"></div>
       </div>
     </div>
 

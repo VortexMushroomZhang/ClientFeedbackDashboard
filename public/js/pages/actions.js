@@ -1,8 +1,19 @@
 // ===== State =====
 let actionGroups = [];
 let allFeedback = [];
+let flatActions = []; // [{action, theme, feedbackItems}]
+let activeTab = 'suggested'; // 'approved' | 'suggested'
 
-// ===== Load Data =====
+// ===== DOM =====
+const tbody          = document.getElementById('actions-tbody');
+const emptyState     = document.getElementById('actions-empty');
+const filterStatus   = document.getElementById('filter-status');
+const filterOwner    = document.getElementById('filter-owner');
+const filterPriority = document.getElementById('filter-priority');
+const clearFiltersBtn= document.getElementById('clear-filters');
+let followupTargetId = null;
+
+// ===== Load =====
 async function loadData() {
   try {
     const [groups, feedbackRes] = await Promise.all([
@@ -12,254 +23,220 @@ async function loadData() {
     actionGroups = groups;
     allFeedback = feedbackRes.items;
   } catch (e) {
-    // Fallback to globals
     allFeedback = typeof FEEDBACK !== 'undefined' ? FEEDBACK : [];
-    const themes = typeof THEMES !== 'undefined' ? THEMES : [];
-    const actions = typeof ACTIONS !== 'undefined' ? ACTIONS : [];
-    // Build groups from mock data
-    const themeIdSet = new Set();
-    actions.forEach(a => (a.themeIds || []).forEach(id => themeIdSet.add(id)));
     actionGroups = [];
-    themeIdSet.forEach(themeId => {
-      const theme = themes.find(t => t.id === themeId);
-      if (!theme) return;
-      const themeActions = actions.filter(a => (a.themeIds || []).includes(themeId));
-      actionGroups.push({
-        theme: { ...theme, mentions: allFeedback.filter(f => f.themeId === themeId).length },
-        actions: themeActions.map(a => ({ ...a, themeId })),
-      });
-    });
-    actionGroups.sort((a, b) => b.theme.mentions - a.theme.mentions);
   }
 
   document.getElementById('total-count').textContent = allFeedback.length + ' total feedback items';
+
+  // Flatten into rows
+  flatActions = [];
+  for (const group of actionGroups) {
+    const feedbackItems = allFeedback.filter(f => f.themeId === group.theme.id);
+    for (const action of group.actions) {
+      flatActions.push({ action, theme: group.theme, feedbackItems });
+    }
+  }
+
+  const total = flatActions.length;
+  document.getElementById('actions-subtitle').textContent =
+    `${total} action${total !== 1 ? 's' : ''} across ${actionGroups.length} theme${actionGroups.length !== 1 ? 's' : ''} — review, prioritize, and assign ownership`;
+
+  updateTabCounts();
+  updateFollowupHeader();
   render();
 }
 
-// ===== Helpers =====
-function priorityBadge(p) {
-  return `<span class="badge badge-priority-${p.toLowerCase()}">${p}</span>`;
-}
-
-function actionStatusBadge(s) {
-  return `<span class="badge badge-action-${s.toLowerCase().replace(/\s+/g, '-')}">${s}</span>`;
-}
-
-function deptBadge(dept) {
-  return `<span class="badge badge-dept">${dept}</span>`;
-}
-
-function feedbackStatusBadge(s) {
-  return `<span class="badge ${statusClass(s)}">${s}</span>`;
-}
-
-function categoryTag(cat) {
-  return `<span class="tag-category ${categoryClass(cat)}">${cat.toUpperCase()}</span>`;
-}
-
-// trendArrow comes from utils.js
-
 // ===== Render =====
 function render() {
-  const list = document.getElementById('action-list');
-  const totalActions = actionGroups.reduce((sum, g) => sum + g.actions.length, 0);
-  document.getElementById('actions-subtitle').textContent =
-    `${totalActions} actions across ${actionGroups.length} themes — review, prioritize, and assign ownership`;
+  const statusFilter = filterStatus.value;
+  const ownerFilter = filterOwner.value;
+  const priorityFilter = filterPriority.value;
 
-  list.innerHTML = actionGroups.map(group => {
-    const t = group.theme;
-    const feedback = allFeedback.filter(f => f.themeId === t.id);
+  clearFiltersBtn.style.display = (statusFilter || ownerFilter || priorityFilter) ? '' : 'none';
+
+  const visible = flatActions.filter(({ action }) => {
+    // Treat missing/null suggestionStatus as 'suggested'
+    const ss = action.suggestionStatus || 'suggested';
+    if (activeTab === 'approved' && ss !== 'approved') return false;
+    if (activeTab === 'suggested' && ss !== 'suggested') return false;
+    if (statusFilter && action.status !== statusFilter) return false;
+    if (ownerFilter && action.owner !== ownerFilter) return false;
+    if (priorityFilter && action.priority !== priorityFilter) return false;
+    return true;
+  });
+
+  if (visible.length === 0) {
+    tbody.innerHTML = '';
+    emptyState.style.display = '';
+    const emptyMsg = emptyState.querySelector('p');
+    if (emptyMsg) emptyMsg.textContent = activeTab === 'suggested'
+      ? 'No AI suggestions pending. All suggestions have been approved or discarded.'
+      : 'No active actions yet. Approve AI suggestions from the Themes page.';
+    return;
+  }
+
+  emptyState.style.display = 'none';
+
+  tbody.innerHTML = visible.map(({ action, theme, feedbackItems }) => {
+    const quotes = feedbackItems.slice(0, 2).map(f =>
+      `<div class="action-why-quote">"${(f.translation || f.quote).slice(0, 120)}${(f.translation || f.quote).length > 120 ? '…' : ''}"</div>`
+    ).join('');
 
     return `
-      <div class="theme-group">
-        <div class="theme-group-header">
-          <div class="theme-group-info">
-            <div class="theme-group-name">${t.name}</div>
-            <div class="theme-group-meta">
-              ${categoryTag(t.category)}
-              <span class="theme-group-mentions">${t.mentions} mentions</span>
-              <span class="theme-group-trend">${trendArrow(t.trend)} ${t.trend}</span>
-            </div>
-          </div>
-          <div class="theme-group-desc">${t.description}</div>
-        </div>
-
-        <div class="theme-group-actions">
-          ${group.actions.map(action => {
-            const notes = action.notes || '';
-            return `
-              <div class="action-card" data-id="${action.id}">
-                <div class="action-card-header">
-                  <div class="action-card-info">
-                    <div class="action-card-title">${action.title}</div>
-                    <div class="action-card-sub">Due ${action.dueDate} &middot; ${feedback.length} feedback item${feedback.length !== 1 ? 's' : ''}</div>
-                  </div>
-                  <div class="action-card-badges">
-                    ${priorityBadge(action.priority)}
-                    ${actionStatusBadge(action.status)}
-                    ${deptBadge(action.owner)}
-                  </div>
-                  <span class="material-icons-outlined action-chevron">expand_more</span>
-                </div>
-                <div class="action-card-body">
-                  <div class="action-controls">
-                    <div class="action-control-group">
-                      <span class="action-control-label">Assigned Department</span>
-                      <select data-field="owner" data-action-id="${action.id}">
-                        ${['Product', 'Engineering', 'Design', 'CX'].map(d =>
-                          `<option value="${d}" ${action.owner === d ? 'selected' : ''}>${d}</option>`
-                        ).join('')}
-                      </select>
-                    </div>
-                    <div class="action-control-group">
-                      <span class="action-control-label">Priority</span>
-                      <select data-field="priority" data-action-id="${action.id}">
-                        ${['High', 'Medium', 'Low'].map(p =>
-                          `<option value="${p}" ${action.priority === p ? 'selected' : ''}>${p.toLowerCase()}</option>`
-                        ).join('')}
-                      </select>
-                    </div>
-                    <div class="action-control-group">
-                      <span class="action-control-label">Status</span>
-                      <select data-field="status" data-action-id="${action.id}">
-                        ${['Proposed', 'Approved', 'In Progress', 'Completed', 'Blocked'].map(s =>
-                          `<option value="${s}" ${action.status === s ? 'selected' : ''}>${s}</option>`
-                        ).join('')}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div class="action-notes-section">
-                    <div class="action-notes-title">
-                      <span class="material-icons-outlined">edit_note</span>
-                      Notes
-                    </div>
-                    <textarea class="action-notes" data-action-id="${action.id}" placeholder="Add discussion notes, decisions, or context...">${notes}</textarea>
-                  </div>
-
-                  <div class="source-feedback-title">
-                    <span class="material-icons-outlined">description</span>
-                    Source Feedback from "${t.name}"
-                  </div>
-                  ${feedback.length > 0 ? feedback.slice(0, 4).map(f => `
-                    <div class="source-card">
-                      <div class="source-quote">"${f.translation || f.quote}"</div>
-                      <div class="source-meta">
-                        <div class="source-meta-left">
-                          <span>${f.date}</span>
-                          <span class="dot">&middot;</span>
-                          <span>${f.source}</span>
-                        </div>
-                        ${feedbackStatusBadge(f.status)}
-                      </div>
-                    </div>
-                  `).join('') : '<div style="font-size:13px;color:var(--text-hint);padding:8px 0;">No linked feedback.</div>'}
-
-                  <div class="action-done-row">
-                    <button class="btn-done" data-action-id="${action.id}">Done — Next Item</button>
-                  </div>
-                </div>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      </div>
+      <tr data-action-id="${action.id}">
+        <td>
+          <div class="action-theme-name">${theme.name}</div>
+          <span class="tag-category ${categoryClass(theme.category)}">${theme.category.toUpperCase()}</span>
+        </td>
+        <td>
+          <div class="action-title">${action.title}</div>
+          ${action.parentActionId ? '<div class="action-followup-label">↳ Follow-up</div>' : ''}
+        </td>
+        <td>
+          <select class="inline-select action-field-select" data-action-id="${action.id}" data-field="owner">
+            ${['Design', 'Research', 'Customer Service', 'Engineering', 'Product'].map(d =>
+              `<option value="${d}" ${action.owner === d ? 'selected' : ''}>${d}</option>`
+            ).join('')}
+          </select>
+        </td>
+        <td>
+          <span class="badge badge-priority-${(action.priority || 'medium').toLowerCase()}">${action.priority || 'Medium'}</span>
+        </td>
+        <td>
+          <select class="inline-select action-field-select" data-action-id="${action.id}" data-field="status">
+            ${['new', 'in progress', 'completed', 'blocked', 'out of scope'].map(s =>
+              `<option value="${s}" ${(action.status || 'new') === s ? 'selected' : ''}>${s.charAt(0).toUpperCase() + s.slice(1)}</option>`
+            ).join('')}
+          </select>
+        </td>
+        <td class="action-why-cell">
+          ${quotes || '<span style="color:var(--text-hint);font-size:12px;">No linked feedback</span>'}
+          ${feedbackItems.length > 2 ? `<div class="action-why-more">+${feedbackItems.length - 2} more</div>` : ''}
+        </td>
+        <td class="action-notes-cell">
+          <textarea class="action-notes-inline" data-action-id="${action.id}" placeholder="Add notes…">${action.notes || ''}</textarea>
+        </td>
+        ${activeTab === 'approved' ? `
+        <td class="action-followup-cell">
+          <button class="btn-followup" data-action-id="${action.id}">
+            <span class="material-icons-outlined">call_split</span>
+            Follow-up
+          </button>
+        </td>` : '<td></td>'}
+      </tr>
     `;
   }).join('');
 }
 
+function updateTabCounts() {
+  const approvedCount = flatActions.filter(({ action }) => (action.suggestionStatus || 'suggested') === 'approved').length;
+  const suggestedCount = flatActions.filter(({ action }) => (action.suggestionStatus || 'suggested') === 'suggested').length;
+  const approvedEl = document.getElementById('tab-count-approved');
+  const suggestedEl = document.getElementById('tab-count-suggested');
+  if (approvedEl) approvedEl.textContent = approvedCount;
+  if (suggestedEl) suggestedEl.textContent = suggestedCount;
+}
+
 // ===== Events =====
-const actionList = document.getElementById('action-list');
-
-// Toggle expand/collapse
-actionList.addEventListener('click', (e) => {
-  if (e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON') return;
-  const header = e.target.closest('.action-card-header');
-  if (!header) return;
-  const card = header.closest('.action-card');
-  const wasExpanded = card.classList.contains('expanded');
-
-  document.querySelectorAll('.action-card.expanded').forEach(c => c.classList.remove('expanded'));
-
-  if (!wasExpanded) {
-    card.classList.add('expanded');
-    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
+document.getElementById('actions-tabs').addEventListener('click', e => {
+  const tab = e.target.closest('.actions-tab');
+  if (!tab) return;
+  activeTab = tab.dataset.tab;
+  document.querySelectorAll('.actions-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === activeTab));
+  updateFollowupHeader();
+  render();
 });
 
-// Inline dropdown changes — persist to API
-actionList.addEventListener('change', (e) => {
-  const select = e.target.closest('select[data-action-id]');
+function updateFollowupHeader() {
+  const th = document.getElementById('th-followup');
+  if (th) th.style.display = activeTab === 'approved' ? '' : 'none';
+}
+
+filterStatus.addEventListener('change', render);
+filterOwner.addEventListener('change', render);
+filterPriority.addEventListener('change', render);
+
+clearFiltersBtn.addEventListener('click', () => {
+  filterStatus.value = '';
+  filterOwner.value = '';
+  filterPriority.value = '';
+  render();
+});
+
+// Inline field changes
+tbody.addEventListener('change', e => {
+  const select = e.target.closest('.action-field-select');
   if (!select) return;
-  const actionId = select.dataset.actionId;
-  const field = select.dataset.field;
+  const { actionId, field } = select.dataset;
   const value = select.value;
 
   // Update local state
-  for (const group of actionGroups) {
-    const action = group.actions.find(a => a.id === actionId);
-    if (action) {
-      action[field] = value;
-      // Update badges
-      const card = select.closest('.action-card');
-      const badges = card.querySelector('.action-card-badges');
-      badges.innerHTML = `
-        ${priorityBadge(action.priority)}
-        ${actionStatusBadge(action.status)}
-        ${deptBadge(action.owner)}
-      `;
-      break;
-    }
+  for (const { action } of flatActions) {
+    if (action.id === actionId) { action[field] = value; break; }
   }
 
-  // Persist to API
-  API.updateAction(actionId, { [field]: value }).catch(err => {
-    console.error('Failed to update action:', err);
-  });
+  API.updateAction(actionId, { [field]: value }).then(() => {
+    if (field === 'status' && value === 'Completed') loadData();
+  }).catch(() => {});
 });
 
-// Save notes with debounce
+// Notes debounced save
 let noteTimers = {};
-actionList.addEventListener('input', (e) => {
-  const textarea = e.target.closest('textarea[data-action-id]');
+tbody.addEventListener('input', e => {
+  const textarea = e.target.closest('.action-notes-inline');
   if (!textarea) return;
-  const actionId = textarea.dataset.actionId;
+  const { actionId } = textarea.dataset;
   const value = textarea.value;
 
-  // Update local state
-  for (const group of actionGroups) {
-    const action = group.actions.find(a => a.id === actionId);
-    if (action) { action.notes = value; break; }
+  for (const { action } of flatActions) {
+    if (action.id === actionId) { action.notes = value; break; }
   }
 
-  // Debounced API save
   clearTimeout(noteTimers[actionId]);
   noteTimers[actionId] = setTimeout(() => {
-    API.updateAction(actionId, { notes: value }).catch(err => {
-      console.error('Failed to save notes:', err);
-    });
+    API.updateAction(actionId, { notes: value }).catch(() => {});
   }, 800);
 });
 
-// Done — Next Item
-actionList.addEventListener('click', (e) => {
-  const btn = e.target.closest('.btn-done');
+// Follow-up button
+tbody.addEventListener('click', e => {
+  const btn = e.target.closest('.btn-followup');
   if (!btn) return;
+  followupTargetId = btn.dataset.actionId;
+  document.getElementById('followup-title').value = '';
+  document.getElementById('followup-overlay').classList.add('open');
+});
 
-  const currentCard = btn.closest('.action-card');
-  currentCard.classList.remove('expanded');
+// Follow-up dialog
+document.getElementById('followup-close').addEventListener('click', closeFollowup);
+document.getElementById('followup-cancel').addEventListener('click', closeFollowup);
+document.getElementById('followup-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('followup-overlay')) closeFollowup();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeFollowup();
+});
 
-  const allCards = [...document.querySelectorAll('.action-card')];
-  const idx = allCards.indexOf(currentCard);
-  const nextCard = allCards[idx + 1];
+document.getElementById('followup-submit').addEventListener('click', async () => {
+  if (!followupTargetId) return;
+  const title = document.getElementById('followup-title').value.trim();
+  const owner = document.getElementById('followup-owner').value;
+  const priority = document.getElementById('followup-priority').value;
 
-  if (nextCard) {
-    setTimeout(() => {
-      nextCard.classList.add('expanded');
-      nextCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 250);
+  try {
+    await API.createFollowUp(followupTargetId, { title, owner, priority });
+    closeFollowup();
+    loadData();
+  } catch (err) {
+    alert('Failed to create follow-up: ' + err.message);
   }
 });
+
+function closeFollowup() {
+  followupTargetId = null;
+  document.getElementById('followup-overlay').classList.remove('open');
+}
 
 // ===== Init =====
 loadData();

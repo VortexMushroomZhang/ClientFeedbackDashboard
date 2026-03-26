@@ -27,11 +27,12 @@ A calm, decision-ready dashboard that turns scattered client feedback into a sin
 
 - Product team
 - Management / leadership
+- Engineering
 
 **Secondary**
 
-- Engineering
 - CX team
+- CS team
 
 **Shared need**
 
@@ -54,8 +55,8 @@ A calm, decision-ready dashboard that turns scattered client feedback into a sin
   - Feedback category
   - Thematic code
   - Thematic analysis
-  - Related theme
-  - Owning department
+  - Sentiment
+  - Handling department
   - Status
 - **Insight dashboards**
   - Top 10 most-mentioned issues
@@ -67,7 +68,7 @@ A calm, decision-ready dashboard that turns scattered client feedback into a sin
   - Emerging vs recurring signals
 - **Action & progress tracking**
   - Proposed action list (advisory)
-  - Manual prioritization by management
+  - Manual prioritization by team
   - Status visibility across teams
 
 ---
@@ -95,7 +96,7 @@ A calm, decision-ready dashboard that turns scattered client feedback into a sin
   - One row per feedback item
   - Always normalized, regardless of source
 - **Source**
-  - Defines origin (survey, interview, CX log, etc.)
+  - Defines origin (survey, interview, CX client feedback book, CS support ticket, feedback tooling, individuals)
 - **Theme**
   - Groups multiple feedback items
   - Supports hierarchy (theme → sub-theme)
@@ -151,27 +152,203 @@ A calm, decision-ready dashboard that turns scattered client feedback into a sin
 - Trending themes preview (top 3)
 - Quick navigation to detailed views
 
-#### **Themes Page**
+#### **Themes -> Action Page**
 
 - Filter pills for quick category filtering
-- Long list card of all themes
+- The new themes are on top, 
+
+Left panel (Big section)
+- Long list of all themes
 - Each card shows:
   - Theme name
   - Metric count + trend indicator
   - Category tag
   - Linked feedback count
+  - Department
+  - Importance
   - Possibility to create action
+
+Right panel (small section)
+- Parallel to the themes, user review all the action suggestions (cards) given by AI.
+- Action card shows:
+  - Proposed action
+  - Department
+  - Status
+
+Archive section
+- Themes that have been handled by actions by departments.
 
 #### **Feedback Page**
 
 - Shows all feedback items in a full list
 - Can be filtered by theme
+- Can clear all filter to see full table
 - Empty state when no selection
 
 #### **Actions Page**
 
-- Track action items and progress
+- Action table that shows
+  - The action needed
+  - Why: Related theme, example quotes
+  - Handing department
+  - Progress status
+  - Notes left by department
 - Empty state (ready for implementation)
+
+
+
+
+
+### Key user flows
+**User Flow 1**
+- Data import
+  - In the future, the platform can fetch the data directly from the different platforms.
+  - For now, users who have access to that platform will be able to upload data sets.
+  - User select the source: 
+  - The datasets can be PDF files, .doc, .csv, Excel, text. There can be missing informations. There can be sensitive information that needs to be removed.
+  - When user upload, AI should clean up the data and format the data first.
+  
+
+After the data cleaning process, AI can conduct the following analysis: translation to english, proposed category, theme code, proposed department, status, sentiment analysis.
+- Data analysis
+  - Step 1 — Category (what type of problem is it?)
+
+  ┌───────────────┬─────────────────────────────────────────────────────────────────────────────┐
+  │   Category    │                               What it covers                                │
+  ├───────────────┼─────────────────────────────────────────────────────────────────────────────┤
+  │ UX            │ Interface, usability, layout, flows, accessibility, navigation              │
+  ├───────────────┼─────────────────────────────────────────────────────────────────────────────┤
+  │ Communication │ Notifications, messaging clarity, pricing transparency, billing information │
+  ├───────────────┼─────────────────────────────────────────────────────────────────────────────┤
+  │ Engineering   │ Bugs, crashes, performance issues, authentication failures, data errors     │
+  ├───────────────┼─────────────────────────────────────────────────────────────────────────────┤
+  │ Feature       │ Requests for new capabilities or improvements to existing ones              │
+  └───────────────┴─────────────────────────────────────────────────────────────────────────────┘
+
+  Step 2 — Sub-type (refinement within the category)
+
+  ┌───────────────┬─────────────────────┬─────────────────────────────────────────┐
+  │   Category    │      Sub-type       │            Trigger condition            │
+  ├───────────────┼─────────────────────┼─────────────────────────────────────────┤
+  │ UX            │ Clear solution      │ Problem is well-defined, fix is obvious │
+  ├───────────────┼─────────────────────┼─────────────────────────────────────────┤
+  │ UX            │ Unclear issue       │ Problem is vague, needs investigation   │
+  ├───────────────┼─────────────────────┼─────────────────────────────────────────┤
+  │ Communication │ (none)              │ —                                       │
+  ├───────────────┼─────────────────────┼─────────────────────────────────────────┤
+  │ Engineering   │ (none)              │ —                                       │
+  ├───────────────┼─────────────────────┼─────────────────────────────────────────┤
+  │ Feature       │ Feature improvement │ Enhancing something that already exists │
+  ├───────────────┼─────────────────────┼─────────────────────────────────────────┤
+  │ Feature       │ New feature request │ Well-defined request for something new  │
+  ├───────────────┼─────────────────────┼─────────────────────────────────────────┤
+  │ Feature       │ Needs validation    │ Vague or unproven new feature idea      │
+  └───────────────┴─────────────────────┴─────────────────────────────────────────┘
+
+  Step 3 — Department (who owns it?)
+
+  ┌──────────────────────────────────────┬──────────────────┐
+  │         Category + Sub-type          │   Assigned to    │
+  ├──────────────────────────────────────┼──────────────────┤
+  │ UX — Clear solution                  │ UX Design        │
+  ├──────────────────────────────────────┼──────────────────┤
+  │ UX — Unclear issue                   │ UX Research      │
+  ├──────────────────────────────────────┼──────────────────┤
+  │ Communication                        │ Customer Service │
+  ├──────────────────────────────────────┼──────────────────┤
+  │ Engineering                          │ Engineering      │
+  ├──────────────────────────────────────┼──────────────────┤
+  │ Feature — improvement or new request │ Product          │
+  ├──────────────────────────────────────┼──────────────────┤
+  │ Feature — needs validation           │ UX Research      │
+  └──────────────────────────────────────┴──────────────────┘
+
+  Step 4 — Supporting fields (all set by Claude per item)
+
+  ┌──────────────┬───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │    Field     │                                                                  Values                                                                   │
+  ├──────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ Sentiment    │ Negative / Neutral / Positive — inferred from text, or derived directly from mood rating (1–2 = Negative, 3 = Neutral, 4–5 = Positive) if │
+  │              │  present in the source file                                                                                                               │
+  ├──────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ Priority     │ High / Medium / Low                                                                                                                       │
+  ├──────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ Thematic     │ Short uppercase slug e.g. SEARCH-REL, PAY-FAIL                                                                                            │
+  │ code         │                                                                                                                                           │
+  ├──────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ Theme        │ 2–4 word group name; deduplicated against existing themes in a second Claude call                                                         │
+  ├──────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ Translation  │ English translation added if original is in another language                                                                              │
+  ├──────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ Analysis     │ 1–2 sentence expert interpretation of why it matters                                                                                      │
+  └──────────────┴───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+**User flow 2 - themes -> actions**
+
+- User look at the themes generated by AI, user then also see the suggestions by AI next to it.
+- User have the ability to reassign certain elements, eg. Importance, handling Department, rewrite theme code, reassign theme.
+
+**User flow 3 - checking status**
+- User check how is the current action status, give update on the actions.
+  - eg. If action is done, theme is closed (handled), these themes will go to archive.
+  - eg. if the action needs to go to another department, we'll create a follow up action on this action that will assign to another department.
+
+
+**User flow 4 - Quick look**
+- User check the lastest update since last login through dashboard.
+
+
+
+
+### Logic
+Feedback -> Theme -> Action
+Table	Key fields	
+	Important information:
+  1. feedback  ──── theme_id ──▶  themes  ◀──── theme_id ──  actions
+  2. theme_id is linked to: category, sub_type, department
+  3. theme_id and related items are shared amongst all.	
+feedback	Taken from uploaded file: 
+  1. date, 
+  2. source: Survey, Interview, CX log, CS ticket, feedback tooling, others
+  3. orignal quote,
+Generated: 
+  1. translation (English)
+  2. category: UX, Communication, Engineering, Feature
+  3. sub_type, 
+  4. theme_id, 
+  5. department: Research, Design, Product, Customer Service, Engineering
+  6. status: new, ongoing, archived
+  7. sentiment: negative, neutral, positive	Status of feedback logic:
+  1. New feedback that comes in, user see it the first time - new
+  2. the theme_id is not archived - ongoing
+  3. theme_id archived - archived
+themes	  1. name = theme id
+  2. category: UX, Communication, Engineering, Feature
+  3. description, 
+  4. mentions: counts of related feedback
+  5. trend, 
+  6. priority: low, medium, high
+  7. Linked feedback
+  8. Department: Research, Design, Product, Customer Service, Engineering
+  9. Status: new, ongoing, archived	Status of theme logic:
+  1. new theme formed, user see it the first time - new
+  2. the theme_id is not archived - ongoing
+  3. theme_id archived - archived
+actions	  1. theme_id, 
+  2. department 
+  3. action title, 
+  4. status: new, in progress, completed, blocked, out of scope 
+  5. priority: same as theme, linked by theme_id
+  6. notes, 
+Others:
+  1. parent_action_id	Action status → theme_id status
+  1. new → new
+  2. in progress, blocked → ongoing
+  3. completed, out of scope → archived
+
+
+
 
 ### Phased roadmap
 
@@ -212,3 +389,4 @@ A calm, decision-ready dashboard that turns scattered client feedback into a sin
 - Alerts for sudden spikes
 - Quarterly insight snapshots
 - Exportable reports for leadership
+

@@ -44,8 +44,8 @@ uploadAnother.addEventListener('click', resetUpload);
 
 function selectFile(file) {
   const ext = file.name.split('.').pop().toLowerCase();
-  if (!['csv', 'docx', 'pdf'].includes(ext)) {
-    alert('Only .csv, .docx, and .pdf files are accepted');
+  if (!['csv', 'xlsx', 'xls', 'docx', 'pdf'].includes(ext)) {
+    alert('Only .csv, .xlsx, .xls, .docx, and .pdf files are accepted');
     return;
   }
   selectedFile = file;
@@ -74,31 +74,64 @@ uploadBtn.addEventListener('click', async () => {
   processingStatus.style.display = 'block';
   uploadResult.style.display = 'none';
   resetSteps();
-
-  // Animate steps
   activateStep('step-extract');
 
+  let pollTimer = null;
+
   try {
-    // Simulate step progression (actual processing is server-side)
-    setTimeout(() => { completeStep('step-extract'); activateStep('step-analyze'); }, 800);
-    setTimeout(() => { completeStep('step-analyze'); activateStep('step-themes'); }, 2000);
-    setTimeout(() => { completeStep('step-themes'); activateStep('step-done'); }, 3000);
-
     const result = await API.uploadFile(selectedFile, sourceSelect.value);
+    const importId = result.importId;
 
-    // Complete all steps
-    ['step-extract', 'step-analyze', 'step-themes', 'step-done'].forEach(completeStep);
+    if (!importId) throw new Error(result.error || 'Upload failed');
 
-    setTimeout(() => {
-      processingStatus.style.display = 'none';
-      uploadResult.style.display = 'block';
-      resultIcon.textContent = 'check_circle';
-      resultIcon.className = 'material-icons-outlined result-icon success';
-      resultText.textContent = result.message || `Imported ${result.itemCount} items`;
-      loadImportHistory();
-    }, 500);
+    // Poll import status every 3s until done
+    let activeStepKey = 'step-extract';
+
+    function updateStepsFromStatus(status) {
+      const s = status || '';
+      if (/Analyz/i.test(s)   && activeStepKey === 'step-extract') { completeStep('step-extract'); activateStep('step-analyze'); activeStepKey = 'step-analyze'; }
+      if (/Synthes/i.test(s)  && activeStepKey === 'step-analyze') { completeStep('step-analyze'); activateStep('step-themes');  activeStepKey = 'step-themes'; }
+      if (/Saving|Generating/i.test(s) && activeStepKey === 'step-themes')  { completeStep('step-themes');  activateStep('step-done');    activeStepKey = 'step-done'; }
+
+      // Show detail text inside the active step
+      const detail = s.replace(/^Processing:\s*/i, '');
+      const activeEl = document.querySelector('.step.active span:last-child');
+      if (activeEl && detail) activeEl.textContent = detail;
+    }
+
+    pollTimer = setInterval(async () => {
+      try {
+        const imports = await API.getImports();
+        const imp = imports.find(i => i.id === importId);
+        if (!imp) return;
+
+        updateStepsFromStatus(imp.status);
+
+        if (imp.status === 'Completed') {
+          clearInterval(pollTimer);
+          ['step-extract','step-analyze','step-themes','step-done'].forEach(completeStep);
+          setTimeout(() => {
+            processingStatus.style.display = 'none';
+            uploadResult.style.display = 'block';
+            resultIcon.textContent = 'check_circle';
+            resultIcon.className = 'material-icons-outlined result-icon success';
+            resultText.textContent = `Imported ${imp.itemCount} feedback items successfully.`;
+            loadImportHistory();
+          }, 400);
+        } else if (/^Failed/i.test(imp.status)) {
+          clearInterval(pollTimer);
+          processingStatus.style.display = 'none';
+          uploadResult.style.display = 'block';
+          resultIcon.textContent = 'error';
+          resultIcon.className = 'material-icons-outlined result-icon error';
+          resultText.textContent = imp.status;
+          loadImportHistory();
+        }
+      } catch (_) { /* ignore poll errors */ }
+    }, 3000);
 
   } catch (err) {
+    clearInterval(pollTimer);
     processingStatus.style.display = 'none';
     uploadResult.style.display = 'block';
     resultIcon.textContent = 'error';
@@ -156,6 +189,49 @@ async function loadImportHistory() {
     console.error('Failed to load import history:', err);
   }
 }
+
+// ===== Re-analyze Themes =====
+document.getElementById('retheme-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('retheme-btn');
+  const statusEl = document.getElementById('retheme-status');
+
+  if (!confirm('This will replace all current themes and action suggestions by re-clustering your existing feedback with AI. Continue?')) return;
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-icons-outlined">hourglass_empty</span> Re-analyzing...';
+  statusEl.style.display = '';
+  statusEl.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-secondary);">
+      <div class="processing-spinner" style="width:18px;height:18px;border-width:2px;"></div>
+      Running AI theme synthesis — this may take a minute…
+    </div>`;
+
+  try {
+    const res = await fetch('/api/retheme', { method: 'POST' });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || 'Re-analyze failed');
+
+    statusEl.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#2e7d32;background:#e8f5e9;border-radius:var(--radius);padding:12px 16px;">
+        <span class="material-icons-outlined" style="font-size:18px;">check_circle</span>
+        <div>
+          <strong>Done.</strong> ${data.message}
+          ${data.feedbackSkipped > 0 ? `<br><span style="color:var(--text-hint)">${data.feedbackSkipped} non-constructive items archived.</span>` : ''}
+        </div>
+      </div>`;
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-icons-outlined">auto_fix_high</span> Re-analyze Themes';
+  } catch (err) {
+    statusEl.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#b71c1c;background:#fce4ec;border-radius:var(--radius);padding:12px 16px;">
+        <span class="material-icons-outlined" style="font-size:18px;">error</span>
+        ${err.message}
+      </div>`;
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-icons-outlined">auto_fix_high</span> Re-analyze Themes';
+  }
+});
 
 // ===== Init =====
 loadImportHistory();

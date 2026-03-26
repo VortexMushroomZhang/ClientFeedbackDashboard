@@ -39,7 +39,7 @@ Every feedback item has:
 2. **Data Source** - Survey, Interview, CX log, etc.
 3. **Original Quote** - Raw feedback (immutable)
 4. **English Translation** - If original is another language
-5. **Feedback Category** - UX, Performance, Navigation, etc.
+5. **Feedback Category** - UX, Communication, Engineering, Feature
 6. **Thematic Code** - Structured categorization
 7. **Thematic Analysis** - Interpretation notes
 8. **Related Theme** - Which theme this belongs to
@@ -57,9 +57,10 @@ Every feedback item has:
 - Source (Survey, Interview, CX Log, etc.)
 - Original Quote (immutable)
 - Translation (if needed)
-- Category (UX, Performance, Navigation, Business, etc.)
+- Category (UX, Communication, Engineering, Feature)
+- Sub-type (Clear solution, Unclear issue, Feature improvement, New feature request, Needs validation)
 - Theme ID (foreign key)
-- Department (Product, Engineering, CX)
+- Department (UX Design, UX Research, UX, Customer Service, Engineering, Product)
 - Status (New, In Review, Assigned, In Progress, Resolved)
 - Sentiment (Negative, Neutral, Positive)
 - Priority (Low, Medium, High)
@@ -215,11 +216,11 @@ Every feedback item has:
 - **Search Bar** - Search by keyword in quotes
 - **Filters**
   - Source (Survey, Interview, CX Log, etc.)
-  - Category (UX, Performance, Navigation, etc.)
+  - Category (UX, Communication, Engineering, Feature)
   - Theme (dropdown of all themes)
   - Status (New, In Review, Assigned, etc.)
   - Date Range
-  - Department
+  - Department (UX Design, UX Research, Customer Service, Engineering, Product)
   - Sentiment
 
 - **Table Columns** (sortable)

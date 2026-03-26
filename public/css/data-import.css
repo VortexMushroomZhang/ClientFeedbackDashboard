@@ -10,7 +10,7 @@
 .upload-zone:hover,
 .upload-zone.dragover {
   border-color: var(--primary);
-  background: rgba(0, 105, 92, 0.04);
+  background: var(--teal-100);
 }
 
 .upload-icon {
@@ -85,23 +85,25 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 20px;
-  background: var(--primary, #00695c);
-  color: #fff;
+  padding: 8px 20px;
+  background: var(--gray-1000);
+  color: var(--background-100);
   border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  letter-spacing: -0.005em;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: opacity var(--transition);
 }
 
 .btn-primary:hover {
-  filter: brightness(1.1);
+  opacity: 0.85;
 }
 
 .btn-primary:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
@@ -110,13 +112,20 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: transparent;
-  color: var(--primary, #00695c);
-  border: 1px solid var(--primary, #00695c);
-  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-primary);
+  box-shadow: var(--shadow);
+  border-radius: var(--radius);
   font-size: 13px;
   font-weight: 500;
+  font-family: inherit;
+  letter-spacing: -0.005em;
   cursor: pointer;
+  transition: box-shadow var(--transition);
+}
+
+.btn-outline:hover {
+  box-shadow: var(--shadow-md);
 }
 
 /* Processing */
@@ -227,7 +236,7 @@
   font-weight: 500;
 }
 
-.import-status.completed { background: #e8f5e9; color: #2e7d32; }
-.import-status.processing { background: #fff8e1; color: #e65100; }
-.import-status.failed { background: #ffebee; color: #c62828; }
-.import-status.empty { background: #f5f5f5; color: #757575; }
+.import-status.completed  { background: var(--green-100);  color: var(--green-700); }
+.import-status.processing { background: var(--amber-100);  color: var(--amber-900); }
+.import-status.failed     { background: var(--red-100);    color: var(--red-700); }
+.import-status.empty      { background: var(--gray-100);   color: var(--gray-700); }

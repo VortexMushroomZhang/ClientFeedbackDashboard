@@ -1,3 +1,52 @@
+/* ===== Clear Filters Button ===== */
+.btn-clear-filters {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.btn-clear-filters .material-icons-outlined {
+  font-size: 15px;
+}
+
+.btn-clear-filters:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* ===== Feedback empty/default state ===== */
+.feedback-empty-select {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80px 24px;
+  text-align: center;
+  color: var(--text-hint);
+}
+
+.feedback-empty-select .material-icons-outlined {
+  font-size: 48px;
+  margin-bottom: 16px;
+  color: var(--border);
+}
+
+.feedback-empty-select p {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
 /* ===== Filters Bar ===== */
 .filters-bar {
   display: flex;
@@ -12,15 +61,15 @@
   align-items: center;
   gap: 8px;
   background: var(--surface);
-  border: 1px solid var(--border);
   border-radius: var(--radius);
+  box-shadow: var(--shadow);
   padding: 8px 14px;
   min-width: 260px;
-  transition: border-color 0.15s;
+  transition: box-shadow var(--transition);
 }
 
 .search-box:focus-within {
-  border-color: var(--primary);
+  box-shadow: var(--focus-ring);
 }
 
 .search-box .material-icons-outlined {
@@ -51,26 +100,26 @@
 .filter-group select {
   appearance: none;
   background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239e9e9e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 10px center;
-  border: 1px solid var(--border);
   border-radius: var(--radius);
+  box-shadow: var(--shadow);
   padding: 8px 32px 8px 12px;
   font-size: 13px;
   font-family: inherit;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition: box-shadow var(--transition);
 }
 
 .filter-group select:focus {
   outline: none;
-  border-color: var(--primary);
+  box-shadow: var(--focus-ring);
 }
 
 /* ===== Table ===== */
 .table-container {
   background: var(--surface);
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow);
   overflow-x: auto;
 }
 
@@ -81,8 +130,8 @@
 }
 
 .feedback-table thead {
-  background: #f8f9fa;
-  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border-light);
 }
 
 .feedback-table th {
@@ -135,7 +184,7 @@
 }
 
 .feedback-table tbody tr:hover {
-  background: #f8fffe;
+  background: var(--teal-100);
 }
 
 .feedback-table .quote-cell {
@@ -169,7 +218,7 @@
   font-family: inherit;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all var(--transition);
 }
 
 .pagination button:hover:not(:disabled) {

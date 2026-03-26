@@ -19,7 +19,6 @@ if (fs.existsSync(envPath)) {
 }
 
 const config = require('./config');
-const { seedFromMockData } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,6 +27,9 @@ app.use(express.json());
 
 // Serve static frontend files from public/
 app.use(express.static(config.publicDir));
+
+// Serve Geist font files
+app.use('/fonts/geist', express.static(path.join(__dirname, '../node_modules/geist/dist/fonts')));
 
 // Redirect root to the overview page
 app.get('/', (req, res) => {
@@ -40,9 +42,7 @@ app.use('/api/themes', require('./routes/themes'));
 app.use('/api/actions', require('./routes/actions'));
 app.use('/api/imports', require('./routes/imports'));
 app.use('/api/upload', require('./routes/upload'));
-
-// Seed database with mock data on first run
-seedFromMockData();
+app.use('/api/retheme', require('./routes/retheme'));
 
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);

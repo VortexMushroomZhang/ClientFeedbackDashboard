@@ -6,7 +6,6 @@
   <title>Client Feedback Dashboard</title>
   <link rel="stylesheet" href="../css/styles.css">
   <link rel="stylesheet" href="../css/feedback.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
 </head>
 <body>
@@ -55,8 +54,8 @@
     <!-- Page Header -->
     <div class="page-header">
       <div class="page-header-text">
-        <h2 class="page-title">All Feedback</h2>
-        <p class="page-subtitle"><span id="feedback-count">0</span> feedback items &middot; Last updated: 2 min ago</p>
+        <h2 class="page-title" id="page-title">Feedback</h2>
+        <p class="page-subtitle"><span id="feedback-count">0</span> feedback items</p>
       </div>
     </div>
 
@@ -78,19 +77,15 @@
         <select id="filter-category">
           <option value="">All Categories</option>
           <option value="UX">UX</option>
-          <option value="Performance">Performance</option>
-          <option value="Navigation">Navigation</option>
-          <option value="Business">Business</option>
-          <option value="Accessibility">Accessibility</option>
-          <option value="Data">Data</option>
+          <option value="Communication">Communication</option>
+          <option value="Engineering">Engineering</option>
+          <option value="Feature">Feature</option>
         </select>
         <select id="filter-status">
           <option value="">All Statuses</option>
-          <option value="New">New</option>
-          <option value="In Review">In Review</option>
-          <option value="Assigned">Assigned</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Resolved">Resolved</option>
+          <option value="new">New</option>
+          <option value="ongoing">Ongoing</option>
+          <option value="archived">Archived</option>
         </select>
         <select id="filter-sentiment">
           <option value="">All Sentiments</option>
@@ -100,11 +95,16 @@
         </select>
         <select id="filter-department">
           <option value="">All Departments</option>
-          <option value="Product">Product</option>
-          <option value="Engineering">Engineering</option>
-          <option value="CX">CX</option>
           <option value="Design">Design</option>
+          <option value="Research">Research</option>
+          <option value="Customer Service">Customer Service</option>
+          <option value="Engineering">Engineering</option>
+          <option value="Product">Product</option>
         </select>
+        <button id="clear-filters" class="btn-clear-filters" style="display:none;">
+          <span class="material-icons-outlined">filter_alt_off</span>
+          Clear Filters
+        </button>
       </div>
     </div>
 

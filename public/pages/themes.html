@@ -3,14 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Client Feedback Dashboard — Themes</title>
+  <title>Client Feedback Dashboard — Themes & Actions</title>
   <link rel="stylesheet" href="../css/styles.css">
   <link rel="stylesheet" href="../css/themes.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
 </head>
 <body>
-  <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <h1 class="sidebar-title">Client Voice</h1>
@@ -50,33 +48,47 @@
     </div>
   </aside>
 
-  <!-- Main Content -->
   <main class="main-content">
     <div class="page-header">
-      <h2 class="page-title">Themes</h2>
-      <p class="page-subtitle" id="theme-subtitle"></p>
+      <div class="page-header-text">
+        <h2 class="page-title">Themes & Actions</h2>
+        <p class="page-subtitle" id="theme-subtitle"></p>
+      </div>
     </div>
 
-    <!-- Category Filter Pills -->
-    <div class="filter-pills" id="filter-pills"></div>
-
-    <!-- Sort -->
-    <div class="sort-row">
-      <span class="sort-label">Sort by:</span>
-      <select id="sort-select">
-        <option value="mentions-desc">By Mentions (Highest First)</option>
-        <option value="mentions-asc">By Mentions (Lowest First)</option>
-        <option value="name-asc">By Name (A–Z)</option>
-        <option value="name-desc">By Name (Z–A)</option>
-        <option value="trend">By Trend</option>
-      </select>
+    <div class="themes-toolbar">
+      <div class="filter-pills" id="filter-pills"></div>
+      <div class="sort-row">
+        <span class="sort-label">Sort:</span>
+        <select id="sort-select">
+          <option value="newest">Newest First</option>
+          <option value="mentions-desc">Most Mentions</option>
+          <option value="importance">By Importance</option>
+          <option value="name-asc">Name A-Z</option>
+        </select>
+      </div>
     </div>
 
-    <!-- Theme Cards -->
-    <div class="theme-cards" id="theme-cards"></div>
+    <div class="themes-columns-header">
+      <div class="themes-col-label">Theme</div>
+      <div class="suggestions-col-label">
+        <span class="material-icons-outlined">auto_awesome</span>
+        AI Action Suggestions
+      </div>
+    </div>
+
+    <div class="theme-rows" id="theme-rows"></div>
+
+    <div class="archive-section" id="archive-section" style="display:none;">
+      <button class="archive-header" id="archive-toggle">
+        <span class="material-icons-outlined">inventory_2</span>
+        <span id="archive-label">Archived Themes</span>
+        <span class="material-icons-outlined archive-chevron" id="archive-chevron">expand_more</span>
+      </button>
+      <div class="archive-rows" id="archive-rows" style="display:none;"></div>
+    </div>
   </main>
 
-  <!-- Detail Dialog -->
   <div class="dialog-overlay" id="dialog-overlay">
     <div class="dialog dialog-lg" id="theme-dialog">
       <div class="dialog-header">

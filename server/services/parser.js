@@ -1,5 +1,6 @@
 const { parse } = require('csv-parse/sync');
 const mammoth = require('mammoth');
+const XLSX = require('xlsx');
 const fs = require('fs');
 
 async function extractText(filePath, fileType) {
@@ -7,6 +8,8 @@ async function extractText(filePath, fileType) {
 
   if (fileType === 'csv') {
     return parseCSV(buffer);
+  } else if (fileType === 'xlsx' || fileType === 'xls') {
+    return parseExcel(buffer);
   } else if (fileType === 'docx') {
     return parseWord(buffer);
   } else if (fileType === 'pdf') {
@@ -66,6 +69,63 @@ function detectDelimiter(content) {
   return counts[0].count > 0 ? counts[0].delimiter : ',';
 }
 
+// Columns that are never feedback text — technical metadata, device info, etc.
+const META_KEYS = new Set([
+  'date', 'url', 'location', 'total time', 'total_time', 'device type', 'browser',
+  'system', 'version', 'ip', 'istargetgroup', 'id', 'row', '#',
+  'feedback id', 'app name', 'app version', 'rooted', 'battery', 'orientation',
+  'language', 'connection', 'screensize', 'status', 'starred', 'public link',
+  'screenshot', 'free space', 'total space', 'free memory', 'total memory',
+  'labels', 'custom abonnee', 'custom locale', 'custom country', 'click_to_edit',
+  'email', 'device', 'device_type',
+]);
+
+function extractFeedbackRows(records) {
+  if (records.length === 0) return [];
+
+  const columns = Object.keys(records[0]);
+
+  // Check for a mood/rating column (1-5 scale)
+  const moodCol = columns.find(c => ['mood', 'rating', 'score', 'nps', 'stars'].includes(c.toLowerCase()));
+
+  // Find columns that are clearly open-text feedback by name
+  const namedFeedbackKeys = [
+    'feedback', 'comment', 'quote', 'text', 'response', 'message', 'description',
+    'notes', 'text2', 'improvement', 'open_text', 'verbatim', 'remark', 'opmerking',
+  ];
+  const namedCols = columns.filter(c => namedFeedbackKeys.includes(c.toLowerCase()));
+
+  // All remaining non-meta, non-mood columns are potential open-text columns
+  const otherCols = columns.filter(c => {
+    const lc = c.toLowerCase();
+    return !META_KEYS.has(lc) && lc !== (moodCol || '').toLowerCase() && !namedFeedbackKeys.includes(lc);
+  });
+
+  // Use named cols if found, otherwise fall back to all non-meta columns
+  const textCols = namedCols.length > 0 ? namedCols : otherCols;
+
+  return records.map(r => {
+    // Merge all non-empty text columns for this row
+    const parts = textCols
+      .map(col => String(r[col] || '').trim())
+      .filter(v => v.length > 3 && v !== ' ');
+
+    if (parts.length === 0) return null;
+
+    const text = parts.join(' | ');
+
+    // Prepend mood rating as context for the AI
+    if (moodCol) {
+      const rating = String(r[moodCol] || '').trim();
+      if (rating && !isNaN(rating)) {
+        return `[Rating: ${rating}/5] ${text}`;
+      }
+    }
+
+    return text;
+  }).filter(t => t && t.length > 10);
+}
+
 function parseCSV(buffer) {
   const content = decodeBuffer(buffer);
   const delimiter = detectDelimiter(content);
@@ -80,30 +140,15 @@ function parseCSV(buffer) {
     quote: '"',
   });
 
-  if (records.length === 0) return [];
+  return extractFeedbackRows(records);
+}
 
-  const columns = Object.keys(records[0]);
-
-  // Try to find text/feedback columns by name
-  const feedbackKeys = ['feedback', 'comment', 'quote', 'text', 'response', 'message', 'description', 'notes', 'text2', 'improvement', 'open_text', 'verbatim', 'remark', 'opmerking'];
-  const feedbackCol = columns.find(c => feedbackKeys.includes(c.toLowerCase()));
-
-  if (feedbackCol) {
-    return records.map(r => r[feedbackCol]).filter(t => t && t.trim());
-  }
-
-  // Build a summary row from meaningful columns (skip metadata like URL, IP, Browser, etc.)
-  const metaKeys = ['url', 'location', 'total time', 'device type', 'browser', 'system', 'ip', 'date', 'istargetgroup', 'total_time'];
-  const meaningfulCols = columns.filter(c => !metaKeys.includes(c.toLowerCase()));
-
-  return records.map(r => {
-    const parts = [];
-    for (const col of meaningfulCols) {
-      const val = (r[col] || '').trim();
-      if (val) parts.push(`${col}: ${val}`);
-    }
-    return parts.join(' | ');
-  }).filter(t => t.length > 10);
+function parseExcel(buffer) {
+  const workbook = XLSX.read(buffer, { type: 'buffer' });
+  const sheetName = workbook.SheetNames[0];
+  const sheet = workbook.Sheets[sheetName];
+  const records = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+  return extractFeedbackRows(records);
 }
 
 async function parseWord(buffer) {

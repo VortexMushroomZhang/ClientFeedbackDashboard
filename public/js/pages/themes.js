@@ -1,33 +1,41 @@
 // ===== State =====
 let activeCategory = '';
-let sortMode = 'mentions-desc';
+let sortMode = 'newest';
 let allThemes = [];
 let allFeedback = [];
+let allActionGroups = [];
+let archiveOpen = false;
 
 // ===== DOM =====
-const filterPills = document.getElementById('filter-pills');
-const sortSelect = document.getElementById('sort-select');
-const themeCards = document.getElementById('theme-cards');
-const themeSubtitle = document.getElementById('theme-subtitle');
-const dialogOverlay = document.getElementById('dialog-overlay');
-const dialogBody = document.getElementById('dialog-body');
-const dialogTitle = document.getElementById('dialog-title');
-const dialogClose = document.getElementById('dialog-close');
+const filterPills    = document.getElementById('filter-pills');
+const sortSelect     = document.getElementById('sort-select');
+const themeRows      = document.getElementById('theme-rows');
+const themeSubtitle  = document.getElementById('theme-subtitle');
+const archiveSection = document.getElementById('archive-section');
+const archiveToggle  = document.getElementById('archive-toggle');
+const archiveRowsEl  = document.getElementById('archive-rows');
+const archiveLabel   = document.getElementById('archive-label');
+const archiveChevron = document.getElementById('archive-chevron');
+const dialogOverlay  = document.getElementById('dialog-overlay');
+const dialogBody     = document.getElementById('dialog-body');
+const dialogTitle    = document.getElementById('dialog-title');
+const dialogClose    = document.getElementById('dialog-close');
 
-// ===== Load Data =====
+// ===== Load =====
 async function loadData() {
   try {
-    const [themes, feedbackRes] = await Promise.all([
+    const [themes, feedbackRes, actionGroups] = await Promise.all([
       API.getThemes(),
       API.getFeedback({ limit: 5000 }),
+      API.getActions(),
     ]);
     allThemes = themes;
     allFeedback = feedbackRes.items;
+    allActionGroups = actionGroups;
   } catch (e) {
     allThemes = typeof THEMES !== 'undefined' ? THEMES : [];
-    allFeedback = (typeof FEEDBACK !== 'undefined' ? FEEDBACK : []).map(f => ({
-      ...f, themeName: allThemes.find(t => t.id === f.themeId)?.name || 'Unknown'
-    }));
+    allFeedback = (typeof FEEDBACK !== 'undefined' ? FEEDBACK : []);
+    allActionGroups = [];
   }
   document.getElementById('total-count').textContent = allFeedback.length + ' total feedback items';
   buildPills();
@@ -42,58 +50,99 @@ function getMentions(themeId) {
 function getThemeStatus(themeId) {
   const items = allFeedback.filter(f => f.themeId === themeId);
   if (!items.length) return 'New';
-  const priority = ['In Progress', 'Assigned', 'In Review', 'New', 'Resolved'];
-  for (const s of priority) {
+  for (const s of ['In Progress', 'Assigned', 'In Review', 'New', 'Resolved']) {
     if (items.some(f => f.status === s)) return s;
   }
   return 'New';
 }
 
-// formatDate, statusClass, categoryClass, trendArrow, trendLabel come from utils.js
-
-// ===== Build Filter Pills =====
-function buildPills() {
-  const categories = ['', 'UX', 'Performance', 'Navigation', 'Business', 'Accessibility', 'Data'];
-  const labels = ['All Themes', 'UX Issues', 'Performance', 'Navigation', 'Business', 'Accessibility', 'Data'];
-  filterPills.innerHTML = categories.map((cat, i) => `
-    <button class="filter-pill ${cat === activeCategory ? 'active' : ''}" data-category="${cat}">${labels[i]}</button>
-  `).join('');
+function getActionsForTheme(themeId) {
+  const group = allActionGroups.find(g => g.theme.id === themeId);
+  return group ? group.actions : [];
 }
 
-// ===== Get sorted/filtered themes =====
-function getThemes() {
-  let list = allThemes.map(t => ({
-    ...t,
-    mentions: t.mentions !== undefined ? t.mentions : getMentions(t.id),
-    feedbackStatus: getThemeStatus(t.id),
-  }));
+// ===== Filter Pills =====
+function buildPills() {
+  const categories = ['', 'UX', 'Communication', 'Engineering', 'Feature'];
+  const labels = ['All', 'UX', 'Communication', 'Engineering', 'Feature'];
+  filterPills.innerHTML = categories.map((cat, i) =>
+    `<button class="filter-pill ${cat === activeCategory ? 'active' : ''}" data-category="${cat}">${labels[i]}</button>`
+  ).join('');
+}
 
-  if (activeCategory) {
-    list = list.filter(t => t.category === activeCategory);
-  }
+// ===== Sort & Filter =====
+function getActive() {
+  let list = allThemes
+    .filter(t => t.status !== 'archived')
+    .map(t => ({ ...t, mentions: t.mentions ?? getMentions(t.id) }));
+
+  if (activeCategory) list = list.filter(t => t.category === activeCategory);
 
   switch (sortMode) {
+    case 'newest':        list.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')); break;
     case 'mentions-desc': list.sort((a, b) => b.mentions - a.mentions); break;
-    case 'mentions-asc': list.sort((a, b) => a.mentions - b.mentions); break;
+    case 'importance': {
+      const order = { High: 0, Medium: 1, Low: 2 };
+      list.sort((a, b) => (order[a.importance] ?? 1) - (order[b.importance] ?? 1));
+      break;
+    }
     case 'name-asc': list.sort((a, b) => a.name.localeCompare(b.name)); break;
-    case 'name-desc': list.sort((a, b) => b.name.localeCompare(a.name)); break;
-    case 'trend': list.sort((a, b) => { const o = { Up: 0, Stable: 1, Down: 2 }; return (o[a.trend] ?? 1) - (o[b.trend] ?? 1); }); break;
   }
-
   return list;
+}
+
+function getArchived() {
+  return allThemes.filter(t => t.status === 'archived');
 }
 
 // ===== Render =====
 function render() {
-  const themes = getThemes();
-  themeSubtitle.textContent = themes.length + ' themes identified across all feedback';
+  const active = getActive();
+  const archived = getArchived();
 
-  themeCards.innerHTML = themes.map(t => `
-    <div class="theme-card" data-id="${t.id}">
+  themeSubtitle.textContent = `${active.length} active theme${active.length !== 1 ? 's' : ''}${archived.length ? ` · ${archived.length} archived` : ''}`;
+
+  if (active.length === 0) {
+    themeRows.innerHTML = `<div class="empty-state"><span class="material-icons-outlined">label_off</span><p>No themes yet. Import feedback to get started.</p></div>`;
+  } else {
+    themeRows.innerHTML = active.map(t => renderThemeRow(t, false)).join('');
+  }
+
+  // Archive section
+  if (archived.length > 0) {
+    archiveSection.style.display = '';
+    archiveLabel.textContent = `Archived Themes (${archived.length})`;
+    archiveRowsEl.innerHTML = archived.map(t => renderThemeRow(t, true)).join('');
+  } else {
+    archiveSection.style.display = 'none';
+  }
+}
+
+// ===== Render theme row (card + parallel suggestions) =====
+function renderThemeRow(t, isArchived) {
+  const actions = getActionsForTheme(t.id).filter(a => a.suggestionStatus !== 'discarded');
+  const suggestionsHtml = actions.length > 0
+    ? actions.map(a => renderSuggestionCard(a, t.id)).join('')
+    : `<div class="suggestion-empty"><span class="material-icons-outlined">tips_and_updates</span><span>No suggestions yet</span></div>`;
+
+  return `
+    <div class="theme-row ${isArchived ? 'theme-row-archived' : ''}">
+      <div class="theme-row-card">
+        ${renderThemeCard(t, isArchived)}
+      </div>
+      <div class="theme-row-suggestions">
+        ${suggestionsHtml}
+      </div>
+    </div>`;
+}
+
+function renderThemeCard(t, isArchived) {
+  return `
+    <div class="theme-card ${isArchived ? 'theme-card-archived' : ''}" data-id="${t.id}">
       <div class="theme-card-top">
         <div class="theme-card-info">
           <div class="theme-card-name">${t.name}</div>
-          <div class="theme-card-desc">${t.description}</div>
+          <div class="theme-card-desc">${t.description || ''}</div>
         </div>
         <div class="theme-card-count">
           ${trendArrow(t.trend)}
@@ -104,13 +153,68 @@ function render() {
       <div class="theme-card-bottom">
         <div class="theme-card-tags">
           <span class="tag-category ${categoryClass(t.category)}">${t.category.toUpperCase()}</span>
-          <span class="badge ${statusClass(t.feedbackStatus)}">${t.feedbackStatus}</span>
+          <span class="badge badge-theme-status-${(t.status || 'new')}">${(t.status || 'new').charAt(0).toUpperCase() + (t.status || 'new').slice(1)}</span>
           <span class="theme-card-feedback-count">${t.mentions} feedback items</span>
         </div>
-        <button class="theme-card-btn" data-id="${t.id}">View Details</button>
+        <div class="theme-card-controls">
+          <div class="inline-edit-group">
+            <label class="inline-label">Priority</label>
+            <select class="inline-select" data-theme-id="${t.id}" data-field="priority" ${isArchived ? 'disabled' : ''}>
+              ${['High', 'Medium', 'Low'].map(v =>
+                `<option value="${v}" ${(t.priority || 'Medium') === v ? 'selected' : ''}>${v}</option>`
+              ).join('')}
+            </select>
+          </div>
+          <div class="inline-edit-group">
+            <label class="inline-label">Category</label>
+            <select class="inline-select" data-theme-id="${t.id}" data-field="category" ${isArchived ? 'disabled' : ''}>
+              ${['UX', 'Communication', 'Engineering', 'Feature'].map(c =>
+                `<option value="${c}" ${(t.category || '') === c ? 'selected' : ''}>${c}</option>`
+              ).join('')}
+            </select>
+          </div>
+          <div class="inline-edit-group">
+            <label class="inline-label">Dept.</label>
+            <select class="inline-select" data-theme-id="${t.id}" data-field="department" ${isArchived ? 'disabled' : ''}>
+              ${['Design', 'Research', 'Customer Service', 'Engineering', 'Product'].map(d =>
+                `<option value="${d}" ${(t.department || '') === d ? 'selected' : ''}>${d}</option>`
+              ).join('')}
+            </select>
+          </div>
+          <button class="theme-card-btn" data-id="${t.id}">Details</button>
+        </div>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+}
+
+function renderSuggestionCard(action, themeId) {
+  const depts = ['Design', 'Research', 'Customer Service', 'Engineering', 'Product'];
+  const isApproved = action.suggestionStatus === 'approved';
+  return `
+    <div class="suggestion-card ${isApproved ? 'suggestion-card-approved' : ''}" data-action-id="${action.id}" data-theme-id="${themeId}">
+      <div class="suggestion-title-row">
+        <input class="suggestion-title-input" data-action-id="${action.id}"
+          value="${(action.title || '').replace(/"/g, '&quot;')}" placeholder="Action title" />
+        ${isApproved ? '<span class="suggestion-approved-badge"><span class="material-icons-outlined">check_circle</span>Approved</span>' : ''}
+      </div>
+      <div class="suggestion-field-row">
+        <label class="inline-label">Dept.</label>
+        <select class="inline-select suggestion-dept" data-action-id="${action.id}" data-theme-id="${themeId}">
+          <option value="">Unassigned</option>
+          ${depts.map(d =>
+            `<option value="${d}" ${(action.owner || '') === d ? 'selected' : ''}>${d}</option>`
+          ).join('')}
+        </select>
+      </div>
+      <textarea class="suggestion-note" data-action-id="${action.id}" placeholder="Add a note…" rows="2">${action.notes || ''}</textarea>
+      <div class="suggestion-card-footer">
+        ${isApproved
+          ? `<button class="btn-suggestion-undo" data-action-id="${action.id}">Undo Approve</button>`
+          : `<button class="btn-suggestion-discard" data-action-id="${action.id}">Discard</button>
+             <button class="btn-suggestion-approve" data-action-id="${action.id}">Approve →</button>`
+        }
+      </div>
+    </div>`;
 }
 
 // ===== Detail Dialog =====
@@ -118,66 +222,44 @@ function openDetail(themeId) {
   const theme = allThemes.find(t => t.id === themeId);
   if (!theme) return;
 
-  const mentions = theme.mentions !== undefined ? theme.mentions : getMentions(themeId);
+  const mentions = theme.mentions ?? getMentions(themeId);
   const feedbackItems = allFeedback.filter(f => f.themeId === themeId).sort((a, b) => b.date.localeCompare(a.date));
-  const status = getThemeStatus(themeId);
 
   dialogTitle.textContent = theme.name;
-
   dialogBody.innerHTML = `
     <div class="detail-section">
       <div class="detail-label">Description</div>
-      <div style="font-size:14px; color:var(--text-primary); line-height:1.6; margin-top:4px;">${theme.description}</div>
+      <div style="font-size:14px;color:var(--text-primary);line-height:1.6;margin-top:4px;">${theme.description || '—'}</div>
     </div>
-
     <div class="detail-metrics-bar">
-      <div class="detail-metric">
-        <div class="detail-metric-value">${mentions}</div>
-        <div class="detail-metric-label">Total Mentions</div>
-      </div>
-      <div class="detail-metric">
-        <div class="detail-metric-value">${feedbackItems.length}</div>
-        <div class="detail-metric-label">Feedback Items</div>
-      </div>
-      <div class="detail-metric">
-        <div class="detail-metric-value">${trendArrow(theme.trend)} ${trendLabel(theme.trend)}</div>
-        <div class="detail-metric-label">Trend</div>
-      </div>
+      <div class="detail-metric"><div class="detail-metric-value">${mentions}</div><div class="detail-metric-label">Mentions</div></div>
+      <div class="detail-metric"><div class="detail-metric-value">${theme.importance || 'Medium'}</div><div class="detail-metric-label">Importance</div></div>
+      <div class="detail-metric"><div class="detail-metric-value">${trendArrow(theme.trend)} ${trendLabel(theme.trend)}</div><div class="detail-metric-label">Trend</div></div>
     </div>
-
-    <div class="linked-feedback-title">All Linked Feedback</div>
+    <div class="linked-feedback-title">Linked Feedback (${feedbackItems.length})</div>
     ${feedbackItems.map(f => `
       <div class="linked-feedback-item">
         <div class="linked-feedback-meta">
-          <span>${formatDate(f.date)}</span>
-          <span class="dot">&middot;</span>
-          <span>${f.source}</span>
-          <span class="dot">&middot;</span>
-          <span class="tag-category ${categoryClass(f.category)}">${f.category.toUpperCase()}</span>
-          <span class="dot">&middot;</span>
+          <span>${formatDate(f.date)}</span><span class="dot">&middot;</span>
+          <span>${f.source}</span><span class="dot">&middot;</span>
+          <span class="tag-category ${categoryClass(f.category)}">${f.category}</span><span class="dot">&middot;</span>
           <span class="badge ${statusClass(f.status)}">${f.status}</span>
           ${f.translation ? '<span class="dot">&middot;</span><span class="badge" style="background:#e3f2fd;color:#1565c0;font-size:10px;">Translated</span>' : ''}
         </div>
         <div class="linked-feedback-quote">${f.translation || f.quote}</div>
       </div>
     `).join('')}
-
     <div class="detail-actions-bar">
-      <button class="btn-primary">Create New Action</button>
-      <button class="btn-outline">View Related Themes</button>
-      <button class="btn-outline">Export Data</button>
-    </div>
-  `;
+      <a href="./feedback.html?theme=${themeId}" class="btn-outline">View All Feedback</a>
+    </div>`;
 
   dialogOverlay.classList.add('open');
 }
 
-function closeDetail() {
-  dialogOverlay.classList.remove('open');
-}
+function closeDetail() { dialogOverlay.classList.remove('open'); }
 
 // ===== Events =====
-filterPills.addEventListener('click', (e) => {
+filterPills.addEventListener('click', e => {
   const pill = e.target.closest('.filter-pill');
   if (!pill) return;
   activeCategory = pill.dataset.category;
@@ -185,28 +267,143 @@ filterPills.addEventListener('click', (e) => {
   render();
 });
 
-sortSelect.addEventListener('change', () => {
-  sortMode = sortSelect.value;
-  render();
-});
+sortSelect.addEventListener('change', () => { sortMode = sortSelect.value; render(); });
 
-themeCards.addEventListener('click', (e) => {
-  const btn = e.target.closest('.theme-card-btn');
-  if (btn) {
-    openDetail(btn.dataset.id);
+// Theme row clicks
+document.addEventListener('click', e => {
+  // Details dialog
+  const detailBtn = e.target.closest('.theme-card-btn');
+  if (detailBtn) { openDetail(detailBtn.dataset.id); return; }
+
+  // Approve suggestion
+  const approveBtn = e.target.closest('.btn-suggestion-approve');
+  if (approveBtn) {
+    const { actionId } = approveBtn.dataset;
+    setSuggestionStatus(actionId, 'approved');
     return;
   }
-  const card = e.target.closest('.theme-card');
-  if (card) openDetail(card.dataset.id);
+
+  // Discard suggestion
+  const discardBtn = e.target.closest('.btn-suggestion-discard');
+  if (discardBtn) {
+    const { actionId } = discardBtn.dataset;
+    setSuggestionStatus(actionId, 'discarded');
+    return;
+  }
+
+  // Undo approve
+  const undoBtn = e.target.closest('.btn-suggestion-undo');
+  if (undoBtn) {
+    const { actionId } = undoBtn.dataset;
+    setSuggestionStatus(actionId, 'suggested');
+    return;
+  }
+
 });
 
+function setSuggestionStatus(actionId, suggestionStatus) {
+  for (const group of allActionGroups) {
+    const action = group.actions.find(a => a.id === actionId);
+    if (action) { action.suggestionStatus = suggestionStatus; break; }
+  }
+  API.updateAction(actionId, { suggestion_status: suggestionStatus }).catch(err => {
+    console.error('Failed to update suggestion status:', err);
+  });
+  render();
+}
+
+function findAction(actionId) {
+  for (const group of allActionGroups) {
+    const a = group.actions.find(a => a.id === actionId);
+    if (a) return a;
+  }
+  return null;
+}
+
+// Archive toggle
+archiveToggle.addEventListener('click', () => {
+  archiveOpen = !archiveOpen;
+  archiveRowsEl.style.display = archiveOpen ? '' : 'none';
+  archiveChevron.textContent = archiveOpen ? 'expand_less' : 'expand_more';
+});
+
+// Inline theme field edit
+document.addEventListener('change', e => {
+  const select = e.target.closest('select[data-theme-id]');
+  if (select) {
+    const { themeId, field } = select.dataset;
+    const value = select.value;
+    const theme = allThemes.find(t => t.id === themeId);
+    if (theme) theme[field] = value;
+    API.updateTheme(themeId, { [field]: value }).catch(() => {});
+    if (field === 'category') render(); // rebuild pills + re-render to update tag color
+    return;
+  }
+
+  // Action dept change — also syncs to theme
+  const deptSelect = e.target.closest('.suggestion-dept');
+  if (deptSelect) {
+    const { actionId, themeId } = deptSelect.dataset;
+    const owner = deptSelect.value;
+    for (const group of allActionGroups) {
+      const action = group.actions.find(a => a.id === actionId);
+      if (action) { action.owner = owner; break; }
+    }
+    // Sync theme department locally too
+    const theme = allThemes.find(t => t.id === themeId);
+    if (theme && owner) theme.department = owner;
+    // Server syncs theme dept automatically when owner changes
+    API.updateAction(actionId, { owner }).catch(() => {});
+    return;
+  }
+
+  // Action status change
+  const suggSelect = e.target.closest('.suggestion-status');
+  if (suggSelect) {
+    const { actionId } = suggSelect.dataset;
+    const status = suggSelect.value;
+    for (const group of allActionGroups) {
+      const action = group.actions.find(a => a.id === actionId);
+      if (action) { action.status = status; break; }
+    }
+    API.updateAction(actionId, { status }).catch(() => {});
+    return;
+  }
+});
+
+// Action title & note save on blur
+document.addEventListener('blur', e => {
+  const titleInput = e.target.closest('.suggestion-title-input');
+  if (titleInput) {
+    const { actionId } = titleInput.dataset;
+    const title = titleInput.value.trim();
+    if (!title) return;
+    for (const group of allActionGroups) {
+      const action = group.actions.find(a => a.id === actionId);
+      if (action) { action.title = title; break; }
+    }
+    API.updateAction(actionId, { title }).catch(() => {});
+    return;
+  }
+
+  const noteArea = e.target.closest('.suggestion-note');
+  if (noteArea) {
+    const { actionId } = noteArea.dataset;
+    const notes = noteArea.value;
+    for (const group of allActionGroups) {
+      const action = group.actions.find(a => a.id === actionId);
+      if (action) { action.notes = notes; break; }
+    }
+    API.updateAction(actionId, { notes }).catch(() => {});
+    return;
+  }
+}, true);
+
 dialogClose.addEventListener('click', closeDetail);
-dialogOverlay.addEventListener('click', (e) => {
-  if (e.target === dialogOverlay) closeDetail();
-});
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeDetail();
-});
+dialogOverlay.addEventListener('click', e => { if (e.target === dialogOverlay) closeDetail(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
+
+
 
 // ===== Init =====
 loadData();

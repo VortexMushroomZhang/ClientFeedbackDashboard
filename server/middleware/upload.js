@@ -18,12 +18,12 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
-    const allowed = ['.csv', '.docx', '.pdf'];
+    const allowed = ['.csv', '.docx', '.pdf', '.xlsx', '.xls'];
     const ext = path.extname(file.originalname).toLowerCase();
     if (allowed.includes(ext)) {
       cb(null, true);
     } else {
-      cb(new Error('Only .csv, .docx, and .pdf files are accepted'));
+      cb(new Error('Only .csv, .xlsx, .xls, .docx, and .pdf files are accepted'));
     }
   },
   limits: config.uploadLimits,

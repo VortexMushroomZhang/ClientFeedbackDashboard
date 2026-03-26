@@ -43,6 +43,7 @@ db.exec(`
     status TEXT DEFAULT 'New',
     sentiment TEXT NOT NULL,
     priority TEXT DEFAULT 'Medium',
+    sub_type TEXT DEFAULT '',
     thematic_code TEXT DEFAULT '',
     analysis TEXT DEFAULT '',
     import_id TEXT,
@@ -64,6 +65,20 @@ db.exec(`
     FOREIGN KEY (theme_id) REFERENCES themes(id)
   );
 `);
+
+// Safe migrations — ignore if column already exists
+const migrations = [
+  `ALTER TABLE feedback ADD COLUMN sub_type TEXT DEFAULT ''`,
+  `ALTER TABLE themes ADD COLUMN importance TEXT DEFAULT 'Medium'`,
+  `ALTER TABLE themes ADD COLUMN archived INTEGER DEFAULT 0`,
+  `ALTER TABLE actions ADD COLUMN parent_action_id TEXT DEFAULT NULL`,
+  `ALTER TABLE themes ADD COLUMN priority TEXT DEFAULT 'Medium'`,
+  `ALTER TABLE themes ADD COLUMN department TEXT DEFAULT ''`,
+  `ALTER TABLE actions ADD COLUMN suggestion_status TEXT DEFAULT 'suggested'`,
+];
+for (const sql of migrations) {
+  try { db.exec(sql); } catch (e) { /* column already exists */ }
+}
 
 function generateId(prefix) {
   return prefix + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
@@ -113,5 +128,40 @@ function seedFromMockData() {
   seedAll();
   console.log('Database seeded with mock data.');
 }
+
+// ===== Deduplicate themes by name (run on every startup) =====
+// Merges duplicate theme rows (same name, case-insensitive) into the oldest one.
+// Also marks non-constructive themes as archived so they don't pollute the board.
+const NON_CONSTRUCTIVE_THEME_PATTERN = /no\s+feedback|incomplete\s+feedback|no\s+comment|no\s+response|empty|n\/a|none|blank|not\s+applicable/i;
+
+function deduplicateThemes() {
+  const themes = db.prepare('SELECT id, name FROM themes ORDER BY created_at ASC').all();
+  const seen = {}; // normalised name → canonical id
+
+  for (const t of themes) {
+    const key = t.name.toLowerCase().trim();
+    if (seen[key]) {
+      const canonicalId = seen[key];
+      db.prepare('UPDATE feedback SET theme_id = ? WHERE theme_id = ?').run(canonicalId, t.id);
+      db.prepare('UPDATE actions  SET theme_id = ? WHERE theme_id = ?').run(canonicalId, t.id);
+      db.prepare('DELETE FROM themes WHERE id = ?').run(t.id);
+    } else {
+      seen[key] = t.id;
+      // Auto-archive non-constructive themes
+      if (NON_CONSTRUCTIVE_THEME_PATTERN.test(t.name)) {
+        // Insert a sentinel "out of scope" action so deriveThemeStatus returns 'archived'
+        const existingAction = db.prepare("SELECT id FROM actions WHERE theme_id = ? AND status = 'out of scope'").get(t.id);
+        if (!existingAction) {
+          const autoId = 'a_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
+          db.prepare('INSERT OR IGNORE INTO actions (id, title, theme_id, status, owner) VALUES (?, ?, ?, ?, ?)').run(
+            autoId, 'Auto-archived: non-constructive feedback', t.id, 'out of scope', 'System'
+          );
+        }
+      }
+    }
+  }
+}
+
+deduplicateThemes();
 
 module.exports = { db, generateId, seedFromMockData };

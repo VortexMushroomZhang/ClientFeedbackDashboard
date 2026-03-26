@@ -43,4 +43,12 @@ const API = {
   getActions() { return this.get('/actions'); },
   getImports() { return this.get('/imports'); },
   updateAction(id, data) { return this.put('/actions/' + id, data); },
+  updateTheme(id, data) { return this.put('/themes/' + id, data); },
+  createFollowUp(parentId, data) {
+    return fetch(this.baseUrl + '/actions/' + parentId + '/followup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }).then(r => r.json());
+  },
 };

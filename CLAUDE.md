@@ -17,8 +17,8 @@ This is an **Nx monorepo** workspace for Angular applications.
 ```
 /
 ├── apps/                    # Application projects
-│   ├── private-app/         # Main private client portal app
-│   └── documents-signing/   # Document signing app
+│   ├── 
+│   └── 
 ├── libs/                    # Shared libraries (reusable across apps)
 │   ├── shared/
 │   ├── feature-*/          # Feature libraries
